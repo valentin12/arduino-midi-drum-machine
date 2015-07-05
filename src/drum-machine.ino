@@ -41,12 +41,17 @@ const char mode_names[mode_count][32] = {"Standard", "Rock", "Blues"};
 int last_bpm = 0;
 int pre_last_bpm = 0;
 int bpm;
-const int bmp_pin = A4;
+const int bmp_pin = A3;
+
+int last_pitch = 0;
+int pre_last_pitch = 0;
+int pitch;
+const int pitch_pin = A0;
 
 int drum_channel = 9;
 const int subdivision = 48;
 int max_bars = 96;
-int mode = (int) Mode::STD;
+int mode = (int) Mode::ROCK;
 
 int numerator = 4;
 int denominator = 4;
@@ -276,13 +281,21 @@ void loop() {
   if (step_counter > subdivision * max_bars - 1) step_counter = 0;
   computeStep(step_counter);
   step_counter++;
-  bpm = map(analogRead(bmp_pin), 0, 1023, 9, 180);
+  bpm = map(analogRead(bmp_pin), 0, 1023, 10, 180);
   if (bpm != last_bpm) {
     if (pre_last_bpm != bpm) {
       updateDisplay();
     }
     pre_last_bpm = last_bpm;
     last_bpm = bpm;
+  }
+  pitch = map(analogRead(pitch_pin), 0, 1023, 0, 0x7f);
+  if (pitch != last_pitch) {
+    if (pre_last_pitch != pitch) {
+      sendMIDI(PITCH_BEND_CHANGE | drum_channel, 0, pitch);
+    }
+    pre_last_pitch = last_pitch;
+    last_pitch = pitch;
   }
   delay(60000 / (bpm * subdivision / numerator));
 }
