@@ -31,10 +31,12 @@ enum class Mode : int {
 };
 
 int bpm = 96;
+const int bmp_pin = A5;
+
 int drum_channel = 9;
 const int subdivision = 48;
 int max_bars = 96;
-int mode = (int) Mode::BLUES;
+int mode = (int) Mode::STD;
 
 int numerator = 4;
 int denominator = 4;
@@ -252,5 +254,6 @@ void loop() {
   if (step_counter > subdivision * max_bars - 1) step_counter = 0;
   computeStep(step_counter);
   step_counter++;
+  int bpm = map(analogRead(bmp_pin), 0, 1023, 10, 180);
   delay(60000 / (bpm * subdivision / numerator));
 }
