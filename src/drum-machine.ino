@@ -17,6 +17,10 @@
  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 #include "drum-machine.h"
+#include <LiquidCrystal.h>
+
+// LCD display
+LiquidCrystal lcd(7, 8, 9, 10, 11, 12);
 
 // MIDI commands
 const int NOTE_ON = 0x90;
@@ -30,8 +34,14 @@ enum class Mode : int {
   BLUES
 };
 
-int bpm = 96;
-const int bmp_pin = A5;
+const int mode_count = 3;
+
+const char mode_names[mode_count][32] = {"Standard", "Rock", "Blues"};
+
+int last_bpm = 0;
+int pre_last_bpm = 0;
+int bpm;
+const int bmp_pin = A4;
 
 int drum_channel = 9;
 const int subdivision = 48;
@@ -81,7 +91,7 @@ Rhythm base_drum_rhythm_4_4_blues = {
 Rhythm base_drum_rhythms[] = {base_drum_rhythm_4_4,
                               base_drum_rhythm_4_4_8bars,
                               base_drum_rhythm_4_4_blues};
-Instrument base_drum = {36, A0, base_drum_rhythms, 3, mode, 0};
+Instrument base_drum = {36, A4, base_drum_rhythms, 3, mode, 0};
 
 /* Snare drum */
 const int snare_drum_rhythm_4_4_offbeat_notes[] = {0, 0x40, 0, 0x40};
@@ -166,7 +176,7 @@ Instrument hi_hat = {42, A2, hi_hat_rhythms, 3, mode, 0};
 
 /* Splash */
 const int splash_rhythm_4_4_eigth_notes[] = {
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x60
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x50
 };
 Rhythm splash_rhythm_4_4_eigth = {
   4, 4, 8, splash_rhythm_4_4_eigth_notes, 8
@@ -179,7 +189,7 @@ const int splash_rhythm_4_4_break_notes[] = {
   0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x60
+  0x00, 0x00, 0x00, 0x50
 };
 Rhythm splash_rhythm_4_4_break = {
   4, 4, 4, splash_rhythm_4_4_break_notes, 32
@@ -196,7 +206,7 @@ const int splash_rhythm_4_4_blues_notes[] = {
   0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x60
+  0x00, 0x00, 0x00, 0x50
 };
 Rhythm splash_rhythm_4_4_blues = {
   4, 4, 4, splash_rhythm_4_4_blues_notes, 48
@@ -204,7 +214,7 @@ Rhythm splash_rhythm_4_4_blues = {
 Rhythm splash_rhythms[] = {splash_rhythm_4_4_eigth,
                            splash_rhythm_4_4_break,
                            splash_rhythm_4_4_blues};
-Instrument splash = {49, A3, splash_rhythms, 3, mode, 0};
+Instrument splash = {49, A2, splash_rhythms, 3, mode, 0};
 
 /* Instrument list */
 Instrument instrs[] = {base_drum, snare_drum, hi_hat, splash};
@@ -243,8 +253,20 @@ void computeStep(int step) {
   }
 }
 
+void updateDisplay() {
+  // clear display
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  // write mode name
+  lcd.print(mode_names[mode]);
+  lcd.setCursor(0, 1);
+  lcd.print(bpm);
+}
+
 int step_counter;
 void setup() {
+  lcd.begin(16, 2);
+  lcd.print("Setup");
   Serial.begin(115200);
   while(!Serial) ;
   step_counter = 0;
@@ -254,6 +276,13 @@ void loop() {
   if (step_counter > subdivision * max_bars - 1) step_counter = 0;
   computeStep(step_counter);
   step_counter++;
-  int bpm = map(analogRead(bmp_pin), 0, 1023, 10, 180);
+  bpm = map(analogRead(bmp_pin), 0, 1023, 9, 180);
+  if (bpm != last_bpm) {
+    if (pre_last_bpm != bpm) {
+      updateDisplay();
+    }
+    pre_last_bpm = last_bpm;
+    last_bpm = bpm;
+  }
   delay(60000 / (bpm * subdivision / numerator));
 }

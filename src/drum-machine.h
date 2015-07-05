@@ -54,6 +54,7 @@ void loop();
 void sendMIDI(const int, const int, const int);
 void sendShortMIDI(const int, const int);
 void computeStep(int);
+void updateDisplay();
 
 
 #endif
