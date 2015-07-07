@@ -49,12 +49,23 @@ struct Instrument {
   int default_rhythm;
 };
 
+class View {
+  /* Describes a display screen */
+public:
+  virtual void updateDisplay() = 0;
+  virtual void computeUp() {};
+  virtual void computeDown() {};
+  virtual void computeLeft() {}
+  virtual void computeRight() {}
+  virtual void computeEnter() {}
+};
+
 void setup();
 void loop();
 void sendMIDI(const int, const int, const int);
 void sendShortMIDI(const int, const int);
 void computeStep(int);
-void updateDisplay();
+boolean computeJoystick();
 
 
 #endif

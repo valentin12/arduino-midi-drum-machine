@@ -22,6 +22,13 @@
 // LCD display
 LiquidCrystal lcd(7, 8, 9, 10, 11, 12);
 
+// Joystick
+const int up_pin = 2;
+const int down_pin = 3;
+const int left_pin = 4;
+const int right_pin = 5;
+const int enter_pin = 6;
+
 // MIDI commands
 const int NOTE_ON = 0x90;
 const int CONTROL_CHANGE = 0xB0;
@@ -34,29 +41,77 @@ enum class Mode : int {
   BLUES
 };
 
-const int mode_count = 3;
+// last joystick input
+boolean last_up;
+boolean last_down;
+boolean last_left;
+boolean last_right;
+boolean last_enter;
 
+// Styles
+const int mode_count = 3;
 const char mode_names[mode_count][32] = {"Standard", "Rock", "Blues"};
 
+// beats per minute
 int last_bpm = 0;
 int pre_last_bpm = 0;
 int bpm;
 const int bmp_pin = A3;
 
+// pitch
 int last_pitch = 0;
 int pre_last_pitch = 0;
 int pitch;
 const int pitch_pin = A0;
 
 int drum_channel = 9;
+
+// subdivision of one bar
 const int subdivision = 48;
 int max_bars = 96;
-int mode = (int) Mode::ROCK;
+
+int mode = (int) Mode::STD;
 
 int numerator = 4;
 int denominator = 4;
 
+// SCREENS
+class MainView: public View {
+  void updateDisplay() {
+    // clear display
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    // write mode name
+    lcd.print(mode_names[mode]);
+    lcd.setCursor(0, 1);
+    lcd.print("BPM: ");
+    lcd.print(bpm);
+  }
 
+  void computeUp() {
+    if (mode + 1 < mode_count) {
+      mode++;
+    }
+    else {
+      mode = 0;
+    }
+    updateDisplay();
+  }
+
+  void computeDown() {
+    if (mode > 0) {
+      mode--;
+    }
+    else {
+      mode = mode_count - 1;
+    }
+    updateDisplay();
+  }
+} main_view;
+
+View *cur_view = &main_view;
+
+// INSTRUMENTS AND RHYTHMS
 
 /* Base drum */
 const int base_drum_rhythm_4_4_notes[] = {0x70, 0x60, 0x60, 0x60};
@@ -240,7 +295,7 @@ void sendShortMIDI(const int cmd, const int val) {
 void computeStep(int step) {
   for (int i=0;i<instrument_count;i++) {
     Instrument instr = instrs[i];
-    Rhythm r = instr.rhythms[instr.cur_rhythm];
+    Rhythm r = instr.rhythms[mode];
     if (step % (subdivision / r.subdivision) != 0)
       continue;
     int local_step = step / (subdivision / r.subdivision) % r.note_count;
@@ -249,27 +304,64 @@ void computeStep(int step) {
       if (vol > 0) {
         sendMIDI(NOTE_ON | drum_channel, instr.midi_note, vol);
       }
-      /*Serial.print(instr.midi_note);
-      Serial.print(" ");
-      Serial.print(r.notes[local_step]);
-      Serial.print(" ");
-      Serial.println(local_step);*/
     }
   }
 }
 
-void updateDisplay() {
-  // clear display
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  // write mode name
-  lcd.print(mode_names[mode]);
-  lcd.setCursor(0, 1);
-  lcd.print(bpm);
+boolean computeJoystick() {
+  /* Returns wether change occured */
+  boolean changed = false;
+  // UP
+  boolean inp = digitalRead(up_pin);
+  // Inputs are connected to pullup
+  if (!inp && last_up) {
+    // changed to HIGH
+    changed = true;
+    cur_view->computeUp();
+  }
+  last_up = inp;
+  // DOWN
+  inp = digitalRead(down_pin);
+  if (!inp && last_down) {
+    // changed to HIGH
+    changed = true;
+    cur_view->computeDown();
+  }
+  last_down = inp;
+  // LEFT
+  inp = digitalRead(left_pin);
+  if (!inp && last_left) {
+    // changed to HIGH
+    changed = true;
+    cur_view->computeLeft();
+  }
+  last_left = inp;
+  // RIGHT
+  inp = digitalRead(right_pin);
+  if (!inp && last_right) {
+    // changed to HIGH
+    changed = true;
+    cur_view->computeRight();
+  }
+  last_right = inp;
+  // ENTER
+  inp = digitalRead(enter_pin);
+  if (!inp && last_enter) {
+    // changed to HIGH
+    changed = true;
+    cur_view->computeEnter();
+  }
+  last_enter = inp;
+  return changed;
 }
 
 int step_counter;
 void setup() {
+  pinMode(up_pin, INPUT_PULLUP);
+  pinMode(down_pin, INPUT_PULLUP);
+  pinMode(left_pin, INPUT_PULLUP);
+  pinMode(right_pin, INPUT_PULLUP);
+  pinMode(enter_pin, INPUT_PULLUP);
   lcd.begin(16, 2);
   lcd.print("Setup");
   Serial.begin(115200);
@@ -281,10 +373,13 @@ void loop() {
   if (step_counter > subdivision * max_bars - 1) step_counter = 0;
   computeStep(step_counter);
   step_counter++;
+
+  computeJoystick();
+
   bpm = map(analogRead(bmp_pin), 0, 1023, 10, 180);
   if (bpm != last_bpm) {
     if (pre_last_bpm != bpm) {
-      updateDisplay();
+      cur_view->updateDisplay();
     }
     pre_last_bpm = last_bpm;
     last_bpm = bpm;
