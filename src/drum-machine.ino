@@ -38,7 +38,8 @@ const int PITCH_BEND_CHANGE = 0xE0;
 enum class Mode : int {
   STD,
   ROCK,
-  BLUES
+  BLUES,
+  JAZZ
 };
 
 // last joystick input
@@ -49,8 +50,8 @@ boolean last_right;
 boolean last_enter;
 
 // Styles
-const int mode_count = 3;
-const char mode_names[mode_count][32] = {"Standard", "Rock", "Blues"};
+const int mode_count = 4;
+const char mode_names[mode_count][32] = {"Standard", "Rock", "Blues", "Jazz"};
 
 // beats per minute
 int last_bpm = 0;
@@ -112,6 +113,10 @@ class MainView: public View {
 View *cur_view = &main_view;
 
 // INSTRUMENTS AND RHYTHMS
+const int empty_rhythm_notes[] = {0x00};
+Rhythm empty_rhythm = {
+  4, 4, 1, empty_rhythm_notes, 1
+};
 
 /* Base drum */
 const int base_drum_rhythm_4_4_notes[] = {0x70, 0x60, 0x60, 0x60};
@@ -148,10 +153,17 @@ const int base_drum_rhythm_4_4_blues_notes[] = {
 Rhythm base_drum_rhythm_4_4_blues = {
   4, 4, 4, base_drum_rhythm_4_4_blues_notes, 48
 };
+const int base_drum_rhythm_4_4_jazz_notes[] = {
+  0x70, 0x00, 0x60, 0x00, 0x00, 0x00, 0x70, 0x00, 0x60, 0x00, 0x00, 0x00
+};
+Rhythm base_drum_rhythm_4_4_jazz = {
+  4, 4, 12, base_drum_rhythm_4_4_jazz_notes, 12
+};
 Rhythm base_drum_rhythms[] = {base_drum_rhythm_4_4,
                               base_drum_rhythm_4_4_8bars,
-                              base_drum_rhythm_4_4_blues};
-Instrument base_drum = {36, A4, base_drum_rhythms, 3, mode, 0};
+                              base_drum_rhythm_4_4_blues,
+                              base_drum_rhythm_4_4_jazz};
+Instrument base_drum = {36, A4, base_drum_rhythms, 4, mode, 0};
 
 /* Snare drum */
 const int snare_drum_rhythm_4_4_offbeat_notes[] = {0, 0x40, 0, 0x40};
@@ -188,10 +200,17 @@ const int snare_drum_rhythm_4_4_blues_notes[] = {
 Rhythm snare_drum_rhythm_4_4_blues = {
   4, 4, 4, snare_drum_rhythm_4_4_blues_notes, 48
 };
+const int snare_drum_rhythm_4_4_jazz_notes[] = {
+  0x00, 0x00, 0x00, 0x70, 0x00, 0x60, 0x00, 0x00, 0x00, 0x70, 0x00, 0x60
+};
+Rhythm snare_drum_rhythm_4_4_jazz = {
+  4, 4, 12, snare_drum_rhythm_4_4_jazz_notes, 12
+};
 Rhythm snare_drum_rhythms[] = {snare_drum_rhythm_4_4_offbeat,
                                snare_drum_rhythm_4_4_8bars,
-                               snare_drum_rhythm_4_4_blues};
-Instrument snare_drum = {38, A1, snare_drum_rhythms, 3, mode, 0};
+                               snare_drum_rhythm_4_4_blues,
+                               snare_drum_rhythm_4_4_jazz};
+Instrument snare_drum = {38, A1, snare_drum_rhythms, 4, mode, 0};
 
 /* Hi-Hat */
 const int hi_hat_rhythm_4_4_eights_notes[] = {
@@ -229,10 +248,17 @@ const int hi_hat_rhythm_4_4_blues_notes[] = {
 Rhythm hi_hat_rhythm_4_4_blues = {
   4, 4, 12, hi_hat_rhythm_4_4_blues_notes, 144
 };
+const int hi_hat_rhythm_4_4_jazz_notes[] = {
+  0x00, 0x48, 0x00, 0x48
+};
+Rhythm hi_hat_rhythm_4_4_jazz = {
+  4, 4, 4, hi_hat_rhythm_4_4_jazz_notes, 4
+};
 Rhythm hi_hat_rhythms[] = {hi_hat_rhythm_4_4_eights,
                            hi_hat_rhythm_4_4_8bars,
-                           hi_hat_rhythm_4_4_blues};
-Instrument hi_hat = {42, A2, hi_hat_rhythms, 3, mode, 0};
+                           hi_hat_rhythm_4_4_blues,
+                           hi_hat_rhythm_4_4_jazz};
+Instrument hi_hat = {42, A2, hi_hat_rhythms, 4, mode, 0};
 
 /* Splash */
 const int splash_rhythm_4_4_eigth_notes[] = {
@@ -271,10 +297,12 @@ const int splash_rhythm_4_4_blues_notes[] = {
 Rhythm splash_rhythm_4_4_blues = {
   4, 4, 4, splash_rhythm_4_4_blues_notes, 48
 };
+// No jazz rhythm yet
 Rhythm splash_rhythms[] = {splash_rhythm_4_4_eigth,
                            splash_rhythm_4_4_break,
-                           splash_rhythm_4_4_blues};
-Instrument splash = {49, A2, splash_rhythms, 3, mode, 0};
+                           splash_rhythm_4_4_blues,
+                           empty_rhythm};
+Instrument splash = {49, A2, splash_rhythms, 4, mode, 0};
 
 /* Instrument list */
 Instrument instrs[] = {base_drum, snare_drum, hi_hat, splash};
