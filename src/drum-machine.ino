@@ -29,17 +29,29 @@ const int left_pin = 4;
 const int right_pin = 5;
 const int enter_pin = 6;
 
+// break button
+const int break_pin = 22;
+
 // MIDI commands
 const int NOTE_ON = 0x90;
 const int CONTROL_CHANGE = 0xB0;
 const int PROGRAM_CHANGE = 0xC0;
 const int PITCH_BEND_CHANGE = 0xE0;
 
+
+// Styles
 enum class Mode : int {
   STD,
   ROCK,
   BLUES,
   JAZZ
+};
+const int mode_count = 4;
+const char mode_names[mode_count][32] = {
+  "Standard", "Rock", "Blues", "Jazz"
+};
+boolean mode_break_mute[] = {
+  true, false, false, false
 };
 
 // last joystick input
@@ -49,9 +61,9 @@ boolean last_left;
 boolean last_right;
 boolean last_enter;
 
-// Styles
-const int mode_count = 4;
-const char mode_names[mode_count][32] = {"Standard", "Rock", "Blues", "Jazz"};
+// break input variables
+boolean last_break;
+boolean is_break;
 
 // beats per minute
 int last_bpm = 0;
@@ -110,6 +122,19 @@ class MainView: public View {
   }
 } main_view;
 
+class DebugJoystickView: public View {
+  void updateDisplay() {
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Joystick Debug");
+  };
+  void computeUp() {Serial.println("Up");};
+  void computeDown() {Serial.println("Down");};
+  void computeLeft() {Serial.println("Left");}
+  void computeRight() {Serial.println("Right");}
+  void computeEnter() {Serial.println("Enter");}
+} debug_joystick_view;
+
 View *cur_view = &main_view;
 
 // INSTRUMENTS AND RHYTHMS
@@ -119,39 +144,11 @@ Rhythm empty_rhythm = {
 };
 
 /* Base drum */
-const int base_drum_rhythm_4_4_notes[] = {0x70, 0x60, 0x60, 0x60};
+const int base_drum_rhythm_4_4_notes[] = {
+  0x75, 0x60, 0x60, 0x60
+};
 Rhythm base_drum_rhythm_4_4 = {
   4, 4, 4, base_drum_rhythm_4_4_notes, 4
-};
-const int base_drum_rhythm_4_4_8bars_notes[] = {
-  0x80, 0x60, 0x60, 0x60,
-  0x70, 0x60, 0x60, 0x60,
-  0x70, 0x60, 0x60, 0x60,
-  0x70, 0x60, 0x60, 0x60,
-  0x70, 0x60, 0x60, 0x60,
-  0x70, 0x60, 0x60, 0x60,
-  0x70, 0x60, 0x60, 0x60,
-  0x70, 0x70, 0x70, 0x70
-};
-Rhythm base_drum_rhythm_4_4_8bars = {
-  4, 4, 4, base_drum_rhythm_4_4_8bars_notes, 32
-};
-const int base_drum_rhythm_4_4_blues_notes[] = {
-  0x7f, 0x60, 0x60, 0x60,
-  0x7f, 0x60, 0x60, 0x60,
-  0x7f, 0x60, 0x60, 0x60,
-  0x7f, 0x60, 0x60, 0x60,
-  0x7f, 0x60, 0x60, 0x60,
-  0x7f, 0x60, 0x60, 0x60,
-  0x7f, 0x60, 0x60, 0x60,
-  0x7f, 0x60, 0x60, 0x60,
-  0x7f, 0x60, 0x60, 0x60,
-  0x7f, 0x60, 0x60, 0x60,
-  0x7f, 0x60, 0x60, 0x60,
-  0x7f, 0x70, 0x70, 0x70
-};
-Rhythm base_drum_rhythm_4_4_blues = {
-  4, 4, 4, base_drum_rhythm_4_4_blues_notes, 48
 };
 const int base_drum_rhythm_4_4_jazz_notes[] = {
   0x70, 0x00, 0x60, 0x00, 0x00, 0x00, 0x70, 0x00, 0x60, 0x00, 0x00, 0x00
@@ -159,11 +156,27 @@ const int base_drum_rhythm_4_4_jazz_notes[] = {
 Rhythm base_drum_rhythm_4_4_jazz = {
   4, 4, 12, base_drum_rhythm_4_4_jazz_notes, 12
 };
-Rhythm base_drum_rhythms[] = {base_drum_rhythm_4_4,
-                              base_drum_rhythm_4_4_8bars,
-                              base_drum_rhythm_4_4_blues,
-                              base_drum_rhythm_4_4_jazz};
-Instrument base_drum = {36, A4, base_drum_rhythms, 4, mode, 0};
+Rhythm base_drum_rhythms[] = {
+  base_drum_rhythm_4_4,
+  base_drum_rhythm_4_4,
+  base_drum_rhythm_4_4,
+  base_drum_rhythm_4_4_jazz
+};
+
+const int base_drum_break_standard_notes[] = {
+  0x60, 0x60, 0x60, 0x65
+};
+Rhythm base_drum_break_standard = {
+  4, 4, 4, base_drum_break_standard_notes, 4
+};
+
+Rhythm base_drum_breaks[] = {
+  base_drum_break_standard,
+  empty_rhythm,
+  empty_rhythm,
+  empty_rhythm
+};
+Instrument base_drum = {36, A4, base_drum_rhythms, base_drum_breaks, 4, mode, 0};
 
 /* Snare drum */
 const int snare_drum_rhythm_4_4_offbeat_notes[] = {0, 0x40, 0, 0x40};
@@ -206,11 +219,27 @@ const int snare_drum_rhythm_4_4_jazz_notes[] = {
 Rhythm snare_drum_rhythm_4_4_jazz = {
   4, 4, 12, snare_drum_rhythm_4_4_jazz_notes, 12
 };
-Rhythm snare_drum_rhythms[] = {snare_drum_rhythm_4_4_offbeat,
-                               snare_drum_rhythm_4_4_8bars,
-                               snare_drum_rhythm_4_4_blues,
-                               snare_drum_rhythm_4_4_jazz};
-Instrument snare_drum = {38, A1, snare_drum_rhythms, 4, mode, 0};
+Rhythm snare_drum_rhythms[] = {
+  snare_drum_rhythm_4_4_offbeat,
+  snare_drum_rhythm_4_4_8bars,
+  snare_drum_rhythm_4_4_blues,
+  snare_drum_rhythm_4_4_jazz
+};
+
+const int snare_drum_break_standard_notes[] = {
+  0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x65, 0x00
+};
+Rhythm snare_drum_break_standard = {
+  4, 4, 8, snare_drum_break_standard_notes, 8
+};
+
+Rhythm snare_drum_breaks[] = {
+  snare_drum_break_standard,
+  empty_rhythm,
+  empty_rhythm,
+  empty_rhythm
+};
+Instrument snare_drum = {38, A1, snare_drum_rhythms, snare_drum_breaks, 4, mode, 0};
 
 /* Hi-Hat */
 const int hi_hat_rhythm_4_4_eights_notes[] = {
@@ -218,35 +247,11 @@ const int hi_hat_rhythm_4_4_eights_notes[] = {
 Rhythm hi_hat_rhythm_4_4_eights = {
   4, 4, 8, hi_hat_rhythm_4_4_eights_notes, 8
 };
-const int hi_hat_rhythm_4_4_8bars_notes[] = {
-  0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48,
-  0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48,
-  0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48,
-  0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x60, 0x00,
-  0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48,
-  0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48,
-  0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48,
-  0x60, 0x48, 0x60, 0x48, 0x60, 0x48, 0x60, 0x00
-};
-Rhythm hi_hat_rhythm_4_4_8bars = {
-  4, 4, 8, hi_hat_rhythm_4_4_8bars_notes, 64
-};
 const int hi_hat_rhythm_4_4_blues_notes[] = {
-  0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48,
-  0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48,
-  0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48,
-  0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48,
-  0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48,
-  0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48,
-  0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48,
-  0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48,
-  0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48,
-  0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48,
-  0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48,
-  0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48,
+  0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48
 };
 Rhythm hi_hat_rhythm_4_4_blues = {
-  4, 4, 12, hi_hat_rhythm_4_4_blues_notes, 144
+  4, 4, 12, hi_hat_rhythm_4_4_blues_notes, 12
 };
 const int hi_hat_rhythm_4_4_jazz_notes[] = {
   0x00, 0x48, 0x00, 0x48
@@ -254,11 +259,27 @@ const int hi_hat_rhythm_4_4_jazz_notes[] = {
 Rhythm hi_hat_rhythm_4_4_jazz = {
   4, 4, 4, hi_hat_rhythm_4_4_jazz_notes, 4
 };
-Rhythm hi_hat_rhythms[] = {hi_hat_rhythm_4_4_eights,
-                           hi_hat_rhythm_4_4_8bars,
-                           hi_hat_rhythm_4_4_blues,
-                           hi_hat_rhythm_4_4_jazz};
-Instrument hi_hat = {42, A2, hi_hat_rhythms, 4, mode, 0};
+Rhythm hi_hat_rhythms[] = {
+  hi_hat_rhythm_4_4_eights,
+  hi_hat_rhythm_4_4_eights,
+  hi_hat_rhythm_4_4_blues,
+  hi_hat_rhythm_4_4_jazz
+};
+
+const int hi_hat_break_standard_notes[] = {
+  0x60, 0x60, 0x60, 0x65
+};
+Rhythm hi_hat_break_standard = {
+  4, 4, 4, hi_hat_break_standard_notes, 4
+};
+
+Rhythm hi_hat_breaks[] = {
+  hi_hat_break_standard,
+  empty_rhythm,
+  empty_rhythm,
+  empty_rhythm
+};
+Instrument hi_hat = {42, A2, hi_hat_rhythms, hi_hat_breaks, 4, mode, 0};
 
 /* Splash */
 const int splash_rhythm_4_4_eigth_notes[] = {
@@ -268,41 +289,26 @@ Rhythm splash_rhythm_4_4_eigth = {
   4, 4, 8, splash_rhythm_4_4_eigth_notes, 8
 };
 const int splash_rhythm_4_4_break_notes[] = {
-  0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x50
 };
 Rhythm splash_rhythm_4_4_break = {
-  4, 4, 4, splash_rhythm_4_4_break_notes, 32
-};
-const int splash_rhythm_4_4_blues_notes[] = {
-  0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x50
-};
-Rhythm splash_rhythm_4_4_blues = {
-  4, 4, 4, splash_rhythm_4_4_blues_notes, 48
+  4, 4, 4, splash_rhythm_4_4_break_notes, 4
 };
 // No jazz rhythm yet
-Rhythm splash_rhythms[] = {splash_rhythm_4_4_eigth,
-                           splash_rhythm_4_4_break,
-                           splash_rhythm_4_4_blues,
-                           empty_rhythm};
-Instrument splash = {49, A2, splash_rhythms, 4, mode, 0};
+Rhythm splash_rhythms[] = {
+  empty_rhythm,
+  empty_rhythm,
+  empty_rhythm,
+  empty_rhythm
+};
+
+Rhythm splash_breaks[] = {
+  splash_rhythm_4_4_eigth,
+  splash_rhythm_4_4_break,
+  splash_rhythm_4_4_break,
+  empty_rhythm
+};
+Instrument splash = {49, A2, splash_rhythms, splash_breaks, 4, mode, 0};
 
 /* Instrument list */
 Instrument instrs[] = {base_drum, snare_drum, hi_hat, splash};
@@ -323,14 +329,32 @@ void sendShortMIDI(const int cmd, const int val) {
 void computeStep(int step) {
   for (int i=0;i<instrument_count;i++) {
     Instrument instr = instrs[i];
-    Rhythm r = instr.rhythms[mode];
-    if (step % (subdivision / r.subdivision) != 0)
-      continue;
-    int local_step = step / (subdivision / r.subdivision) % r.note_count;
-    if (r.notes[local_step] > 0) {
-      int vol = r.notes[local_step] * (analogRead(instr.input_pin) / 1023.0);
-      if (vol > 0) {
-        sendMIDI(NOTE_ON | drum_channel, instr.midi_note, vol);
+    for (int l=0;l<2;l++) {
+      Rhythm r;
+      if (l==0) {
+        if (is_break && mode_break_mute[mode]) {
+          continue;
+        }
+        else {
+          r = instr.rhythms[mode];
+        }
+      }
+      else {
+        if (is_break) {
+          r = instr.breaks[mode];
+        }
+        else {
+          continue;
+        }
+      }
+      if (step % (subdivision / r.subdivision) != 0)
+        continue;
+      int local_step = step / (subdivision / r.subdivision) % r.note_count;
+      if (r.notes[local_step] > 0) {
+        int vol = r.notes[local_step] * (analogRead(instr.input_pin) / 1023.0);
+        if (vol > 0) {
+          sendMIDI(NOTE_ON | drum_channel, instr.midi_note, vol);
+        }
       }
     }
   }
@@ -383,6 +407,14 @@ boolean computeJoystick() {
   return changed;
 }
 
+boolean computeBreakSwitch() {
+  is_break = !digitalRead(break_pin);
+  if (is_break != last_break) {
+    return true;
+  }
+  return false;
+}
+
 int step_counter;
 void setup() {
   pinMode(up_pin, INPUT_PULLUP);
@@ -390,6 +422,9 @@ void setup() {
   pinMode(left_pin, INPUT_PULLUP);
   pinMode(right_pin, INPUT_PULLUP);
   pinMode(enter_pin, INPUT_PULLUP);
+
+  pinMode(break_pin, INPUT_PULLUP);
+
   lcd.begin(16, 2);
   lcd.print("Setup");
   Serial.begin(115200);
@@ -399,12 +434,13 @@ void setup() {
 
 void loop() {
   if (step_counter > subdivision * max_bars - 1) step_counter = 0;
+  computeBreakSwitch();
   computeStep(step_counter);
   step_counter++;
 
   computeJoystick();
 
-  bpm = map(analogRead(bmp_pin), 0, 1023, 10, 180);
+  bpm = map(analogRead(bmp_pin), 0, 1023, 10, 220);
   if (bpm != last_bpm) {
     if (pre_last_bpm != bpm) {
       cur_view->updateDisplay();

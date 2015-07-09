@@ -44,6 +44,7 @@ struct Instrument {
   int input_pin;
 
   Rhythm* rhythms;
+  Rhythm* breaks;
   int rhythm_count;
   int cur_rhythm;
   int default_rhythm;
@@ -66,6 +67,7 @@ void sendMIDI(const int, const int, const int);
 void sendShortMIDI(const int, const int);
 void computeStep(int);
 boolean computeJoystick();
+boolean computeBreakSwitch();
 
 
 #endif
