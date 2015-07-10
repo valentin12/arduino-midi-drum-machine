@@ -21,6 +21,7 @@
 
 struct Rhythm {
   /* Describes the rhythm for a time signature for an instrument */
+  char name[32];
   int numerator;
   int denominator;
 
@@ -38,24 +39,28 @@ struct Rhythm {
   int note_count; /* length of *notes* */
 };
 
+struct RhythmCollection {
+  Rhythm* rhythms;
+  int rythm_count;
+  int cur_rhythm;
+};
+
 struct Instrument {
   /* Describes an instrument */
+  char name[32];
   int midi_note;
   int input_pin;
 
-  Rhythm* rhythms;
-  Rhythm* breaks;
-  int rhythm_count;
-  int cur_rhythm;
-  int default_rhythm;
+  RhythmCollection* rhythms;
+  RhythmCollection* breaks;
 };
 
 class View {
   /* Describes a display screen */
 public:
   virtual void updateDisplay() = 0;
-  virtual void computeUp() {};
-  virtual void computeDown() {};
+  virtual void computeUp() {}
+  virtual void computeDown() {}
   virtual void computeLeft() {}
   virtual void computeRight() {}
   virtual void computeEnter() {}
@@ -66,6 +71,7 @@ void loop();
 void sendMIDI(const int, const int, const int);
 void sendShortMIDI(const int, const int);
 void computeStep(int);
+void displayBeat(const int, const boolean force_redraw);
 boolean computeJoystick();
 boolean computeBreakSwitch();
 
