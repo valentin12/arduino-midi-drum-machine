@@ -30,6 +30,9 @@ void EEPROM_update(int pos, int data) {
 // LCD display
 LiquidCrystal lcd(7, 8, 9, 10, 11, 12);
 
+// Pin to display beat
+const int metronome_pin = 13;
+
 // Joystick
 const int up_pin = 2;
 const int down_pin = 3;
@@ -85,11 +88,17 @@ int pre_last_pitch = 0;
 int pitch;
 const int pitch_pin = A0;
 
+// volume
+int last_vol = 0;
+int pre_last_vol = 0;
+int vol;
+const int vol_pin = A8;
+
 int drum_channel = 9;
 
 // subdivision of one bar
 const int subdivision = 48;
-int max_bars = 4;
+int max_bars = 96;
 
 int step_counter;
 
@@ -99,8 +108,8 @@ int numerator = 4;
 int denominator = 4;
 
 // EEPROM addresses
-const int mode_pos=0;
-const int instruments_pos=1024;
+const int mode_pos = 0;
+const int instruments_pos = 1024;
 
 // SCREENS
 class MainView: public View {
@@ -357,9 +366,27 @@ void escapeLCDNum(const int number, const int max_digits) {
 void displayBeat(const int step, const boolean force_redraw) {
   int local_step = step / (subdivision / numerator) % numerator;
   if (force_redraw || step == 0 ||
-      local_step != (step -1) / (subdivision / numerator) % numerator) {
+      local_step != (step - 1) / (subdivision / numerator) % numerator) {
+    // LCD
     lcd.setCursor(14, 0);
     escapeLCDNum(local_step + 1, 2);
+  }
+
+  // LED
+  if (step == 0 ||
+      local_step != (step - 1) / (subdivision / numerator) % numerator) {
+    if (local_step == 0)
+      analogWrite(metronome_pin, 0xff);
+    else
+      analogWrite(metronome_pin, 0x20);
+  }
+  else {
+    int part = 4;
+    if (local_step == 0)
+      part = 2;
+    if (step % (subdivision / numerator)  > subdivision / (numerator * part)) {
+      analogWrite(metronome_pin, 0);
+    }
   }
 }
 
@@ -390,9 +417,9 @@ void computeStep(int step) {
         continue;
       int local_step = step / (subdivision / r.subdivision) % r.note_count;
       if (r.notes[local_step] > 0) {
-        int vol = r.notes[local_step] * (analogRead(instr.input_pin) / 1023.0);
-        if (vol > 0) {
-          sendMIDI(NOTE_ON | drum_channel, instr.midi_note, vol);
+        int note_vol = r.notes[local_step] * (analogRead(instr.input_pin) / 1023.0);
+        if (vol > 0 && note_vol > 0) {
+          sendMIDI(NOTE_ON | drum_channel, instr.midi_note, note_vol);
         }
       }
     }
@@ -535,6 +562,8 @@ void setup() {
 
   pinMode(break_pin, INPUT_PULLUP);
 
+  pinMode(metronome_pin, OUTPUT);
+
   lcd.begin(16, 2);
   lcd.print("Setup");
   Serial.begin(115200);
@@ -549,7 +578,7 @@ void setup() {
 }
 
 void loop() {
-  if (step_counter >= subdivision * max_bars - 1) step_counter = 0;
+  if (step_counter > subdivision * max_bars - 1) step_counter = 0;
   computeBreakSwitch();
   computeStep(step_counter);
   displayBeat(step_counter, false);
@@ -557,6 +586,14 @@ void loop() {
 
   computeJoystick();
 
+  vol = map(analogRead(vol_pin), 0, 1023, 0, 0x7f);
+  if (vol != last_vol) {
+    if (pre_last_vol != vol) {
+      sendMIDI(CONTROL_CHANGE | drum_channel, 0x07, vol);
+    }
+    pre_last_vol = last_vol;
+    last_vol = vol;
+  }
   bpm = map(analogRead(bmp_pin), 0, 1023, 10, 220);
   if (bpm != last_bpm) {
     if (pre_last_bpm != bpm) {
