@@ -157,10 +157,10 @@ class SetRhythmView: public View {
     lcd.print("Rhythm ");
     lcd.print(instrs[cur_instr].name);
     lcd.setCursor(0, 1);
-    lcd.print(instrs[cur_instr].rhythms->cur_rhythm + 1);
+    lcd.print(instrs[cur_instr].rhythms[mode].cur_rhythm + 1);
     lcd.print(": ");
-    lcd.print(instrs[cur_instr].rhythms->rhythms[
-      instrs[cur_instr].rhythms->cur_rhythm].name);
+    lcd.print(instrs[cur_instr].rhythms[mode].rhythms[
+      instrs[cur_instr].rhythms[mode].cur_rhythm].name);
 
     if (edit) {
       // Edit mode
@@ -172,15 +172,15 @@ class SetRhythmView: public View {
 
   void computeUp() {
     if (edit) {
-      if (instrs[cur_instr].rhythms->rhythm_count < 2) {
+      if (instrs[cur_instr].rhythms[mode].rhythm_count < 2) {
         return;
       }
-      if (instrs[cur_instr].rhythms->cur_rhythm + 1 <
-          instrs[cur_instr].rhythms->rhythm_count) {
-        instrs[cur_instr].rhythms->cur_rhythm++;
+      if (instrs[cur_instr].rhythms[mode].cur_rhythm + 1 <
+          instrs[cur_instr].rhythms[mode].rhythm_count) {
+        instrs[cur_instr].rhythms[mode].cur_rhythm++;
       }
       else {
-        instrs[cur_instr].rhythms->cur_rhythm = 0;
+        instrs[cur_instr].rhythms[mode].cur_rhythm = 0;
       }
       saveInstrument(instrs[cur_instr]);
     }
@@ -197,15 +197,15 @@ class SetRhythmView: public View {
 
   void computeDown() {
     if (edit) {
-      if (instrs[cur_instr].rhythms->rhythm_count < 2) {
+      if (instrs[cur_instr].rhythms[mode].rhythm_count < 2) {
         return;
       }
-      if (instrs[cur_instr].rhythms->cur_rhythm - 1 >= 0) {
-        instrs[cur_instr].rhythms->cur_rhythm--;
+      if (instrs[cur_instr].rhythms[mode].cur_rhythm - 1 >= 0) {
+        instrs[cur_instr].rhythms[mode].cur_rhythm--;
       }
       else {
-        instrs[cur_instr].rhythms->cur_rhythm =
-          instrs[cur_instr].rhythms->rhythm_count - 1;
+        instrs[cur_instr].rhythms[mode].cur_rhythm =
+          instrs[cur_instr].rhythms[mode].rhythm_count - 1;
       }
       saveInstrument(instrs[cur_instr]);
     }
@@ -226,10 +226,12 @@ class SetRhythmView: public View {
   }
 
   void computeLeft() {
+    edit = false;
     prevView();
   }
 
   void computeRight() {
+    edit = false;
     nextView();
   }
 } set_rhythm_view;
@@ -245,10 +247,10 @@ class SetBreakView: public View {
     lcd.print("Break ");
     lcd.print(instrs[cur_instr].name);
     lcd.setCursor(0, 1);
-    lcd.print(instrs[cur_instr].breaks->cur_rhythm + 1);
+    lcd.print(instrs[cur_instr].breaks[mode].cur_rhythm + 1);
     lcd.print(": ");
-    lcd.print(instrs[cur_instr].breaks->rhythms[
-      instrs[cur_instr].breaks->cur_rhythm].name);
+    lcd.print(instrs[cur_instr].breaks[mode].rhythms[
+      instrs[cur_instr].breaks[mode].cur_rhythm].name);
 
     if (edit) {
       // Edit mode
@@ -260,15 +262,15 @@ class SetBreakView: public View {
 
   void computeUp() {
     if (edit) {
-      if (instrs[cur_instr].breaks->rhythm_count < 2) {
+      if (instrs[cur_instr].breaks[mode].rhythm_count < 2) {
         return;
       }
-      if (instrs[cur_instr].breaks->cur_rhythm + 1 <
-          instrs[cur_instr].breaks->rhythm_count) {
-        instrs[cur_instr].breaks->cur_rhythm++;
+      if (instrs[cur_instr].breaks[mode].cur_rhythm + 1 <
+          instrs[cur_instr].breaks[mode].rhythm_count) {
+        instrs[cur_instr].breaks[mode].cur_rhythm++;
       }
       else {
-        instrs[cur_instr].breaks->cur_rhythm = 0;
+        instrs[cur_instr].breaks[mode].cur_rhythm = 0;
       }
       saveInstrument(instrs[cur_instr]);
     }
@@ -285,15 +287,15 @@ class SetBreakView: public View {
 
   void computeDown() {
     if (edit) {
-      if (instrs[cur_instr].breaks->rhythm_count < 2) {
+      if (instrs[cur_instr].breaks[mode].rhythm_count < 2) {
         return;
       }
-      if (instrs[cur_instr].breaks->cur_rhythm - 1 >= 0) {
-        instrs[cur_instr].breaks->cur_rhythm--;
+      if (instrs[cur_instr].breaks[mode].cur_rhythm - 1 >= 0) {
+        instrs[cur_instr].breaks[mode].cur_rhythm--;
       }
       else {
-        instrs[cur_instr].breaks->cur_rhythm =
-          instrs[cur_instr].breaks->rhythm_count - 1;
+        instrs[cur_instr].breaks[mode].cur_rhythm =
+          instrs[cur_instr].breaks[mode].rhythm_count - 1;
       }
       saveInstrument(instrs[cur_instr]);
     }
@@ -314,10 +316,12 @@ class SetBreakView: public View {
   }
 
   void computeLeft() {
+    edit = false;
     prevView();
   }
 
   void computeRight() {
+    edit = false;
     nextView();
   }
 } set_break_view;
