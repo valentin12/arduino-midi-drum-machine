@@ -76,7 +76,7 @@ void sendMIDI(const int, const int, const int);
 void sendShortMIDI(const int, const int);
 void computeStep(int);
 void escapeLCDNum(const int, const int);
-void displayBeat(const int, const boolean);
+void displayBeat(const int, boolean);
 void nextView();
 void prevView();
 boolean computeJoystick();

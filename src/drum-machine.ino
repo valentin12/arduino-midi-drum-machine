@@ -89,7 +89,7 @@ int drum_channel = 9;
 
 // subdivision of one bar
 const int subdivision = 48;
-int max_bars = 96;
+int max_bars = 4;
 
 int step_counter;
 
@@ -356,7 +356,7 @@ void escapeLCDNum(const int number, const int max_digits) {
 
 void displayBeat(const int step, const boolean force_redraw) {
   int local_step = step / (subdivision / numerator) % numerator;
-  if (force_redraw ||
+  if (force_redraw || step == 0 ||
       local_step != (step -1) / (subdivision / numerator) % numerator) {
     lcd.setCursor(14, 0);
     escapeLCDNum(local_step + 1, 2);
@@ -549,7 +549,7 @@ void setup() {
 }
 
 void loop() {
-  if (step_counter > subdivision * max_bars - 1) step_counter = 0;
+  if (step_counter >= subdivision * max_bars - 1) step_counter = 0;
   computeBreakSwitch();
   computeStep(step_counter);
   displayBeat(step_counter, false);
