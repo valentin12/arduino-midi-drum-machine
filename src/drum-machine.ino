@@ -18,6 +18,14 @@
 */
 #include "drum-machine.h"
 #include <LiquidCrystal.h>
+#include <EEPROM.h>
+
+// Patch EEPROM
+void EEPROM_update(int pos, int data) {
+  if (EEPROM.read(pos) != data) {
+    EEPROM.write(pos, data);
+  }
+}
 
 // LCD display
 LiquidCrystal lcd(7, 8, 9, 10, 11, 12);
@@ -90,6 +98,10 @@ int mode = (int) Mode::STD;
 int numerator = 4;
 int denominator = 4;
 
+// EEPROM addresses
+const int mode_pos=0;
+const int instruments_pos=1024;
+
 // SCREENS
 class MainView: public View {
   void updateDisplay() {
@@ -107,20 +119,20 @@ class MainView: public View {
 
   void computeUp() {
     if (mode + 1 < mode_count) {
-      mode++;
+      setMode(mode + 1);
     }
     else {
-      mode = 0;
+      setMode(0);
     }
     updateDisplay();
   }
 
   void computeDown() {
     if (mode > 0) {
-      mode--;
+      setMode(mode - 1);
     }
     else {
-      mode = mode_count - 1;
+      setMode(mode_count - 1);
     }
     updateDisplay();
   }
@@ -247,7 +259,9 @@ RhythmCollection base_breaks[] = {
   base_jazz_breaks
 };
 
-Instrument base_drum = {"Base Drum", 36, A4, base_rhythms, base_breaks};
+Instrument base_drum = {
+  0, "Base Drum", 36, A4, base_rhythms, base_breaks
+};
 
 /* Snare drum */
 /* Snare drum rhythms */
@@ -352,7 +366,7 @@ RhythmCollection snare_breaks[] = {
   snare_jazz_breaks
 };
 
-Instrument snare_drum = {"Snare Drum", 38, A1, snare_rhythms, snare_breaks};
+Instrument snare_drum = {1, "Snare Drum", 38, A1, snare_rhythms, snare_breaks};
 
 /* Hi-Hat */
 /* Hi-Hat rhythms */
@@ -450,7 +464,7 @@ RhythmCollection hi_hat_breaks[] = {
   hi_hat_jazz_breaks
 };
 
-Instrument hi_hat = {"Hi-Hat", 42, A2, hi_hat_rhythms, hi_hat_breaks};
+Instrument hi_hat = {2, "Hi-Hat", 42, A2, hi_hat_rhythms, hi_hat_breaks};
 
 /* Splash */
 /* Splash rhythms */
@@ -503,7 +517,7 @@ RhythmCollection splash_breaks[] = {
   splash_jazz_breaks
 };
 
-Instrument splash = {"Splash", 49, A2, splash_rhythms, splash_breaks};
+Instrument splash = {3, "Splash", 49, A2, splash_rhythms, splash_breaks};
 
 /* Instrument list */
 Instrument instrs[] = {base_drum, snare_drum, hi_hat, splash};
@@ -621,6 +635,56 @@ boolean computeBreakSwitch() {
   return false;
 }
 
+/* Getter and setter (for EEPROM) */
+int getMode() {
+  int mode_eeprom = EEPROM.read(mode_pos);
+  if (mode_eeprom >= 0 && mode_eeprom < mode_count) {
+    return mode_eeprom;
+  }
+  return 0;
+}
+
+void setMode(int new_mode) {
+  if (mode != new_mode) {
+    mode = new_mode;
+    EEPROM_update(mode_pos, mode);
+  }
+}
+
+void saveInstrument(Instrument instr) {
+  int cur_pos = instruments_pos + instr.uid * INSTR_STORE_MAX_SIZE;
+  EEPROM_update(cur_pos, instr.uid);
+  cur_pos++;
+  // current rhythms for every mode in the instrument
+  for (int i=0;i<mode_count;i++) {
+    EEPROM_update(cur_pos + i, instr.rhythms[i].cur_rhythm);
+  }
+  cur_pos += MAX_MODES;
+  // current break for every mode in the instrument
+  for (int i=0;i<mode_count;i++) {
+    EEPROM_update(cur_pos + i, instr.breaks[i].cur_rhythm);
+  }
+  cur_pos += MAX_MODES;
+}
+
+void restoreInstrument(Instrument* instr) {
+  int cur_pos = instruments_pos + instr->uid * INSTR_STORE_MAX_SIZE;
+  if (EEPROM.read(cur_pos) != instr->uid) {
+    // Last write didn't come from this instrument -> don't change anything
+    return;
+  }
+  cur_pos++;
+  for (int i=0;i<mode_count;i++) {
+    instr->rhythms[i].cur_rhythm = EEPROM.read(cur_pos + i);
+  }
+  cur_pos += MAX_MODES;
+  for (int i=0;i<mode_count;i++) {
+    instr->breaks[i].cur_rhythm = EEPROM.read(cur_pos + i);
+  }
+  cur_pos += MAX_MODES;
+}
+
+
 void setup() {
   pinMode(up_pin, INPUT_PULLUP);
   pinMode(down_pin, INPUT_PULLUP);
@@ -635,6 +699,12 @@ void setup() {
   Serial.begin(115200);
   while(!Serial) ;
   step_counter = 0;
+
+  // Read EEPROM content
+  mode = getMode();
+  for (int i=0;i<instrument_count;i++) {
+    restoreInstrument(&instrs[i]);
+  }
 }
 
 void loop() {

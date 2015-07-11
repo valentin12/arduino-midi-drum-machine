@@ -19,6 +19,9 @@
 #ifndef DRUM_MACHINE_H
 #define DRUM_MACHINE_H
 
+const int MAX_MODES = 30;
+const int INSTR_STORE_MAX_SIZE = 80;
+
 struct Rhythm {
   /* Describes the rhythm for a time signature for an instrument */
   char name[32];
@@ -45,8 +48,15 @@ struct RhythmCollection {
   int cur_rhythm;
 };
 
+struct InstrumentStore {
+  int uid; // Unique identifier of the stored instrument
+  int cur_rhythms[MAX_MODES]; // cur_rhythm for every style (max=30 styles)
+  int cur_breaks[MAX_MODES]; // see cur_rhythms
+};
+
 struct Instrument {
   /* Describes an instrument */
+  int uid; // Unique identifier/relative position in EEPROM
   char name[32];
   int midi_note;
   int input_pin;
@@ -71,9 +81,15 @@ void loop();
 void sendMIDI(const int, const int, const int);
 void sendShortMIDI(const int, const int);
 void computeStep(int);
-void displayBeat(const int, const boolean force_redraw);
+void displayBeat(const int, const boolean);
 boolean computeJoystick();
 boolean computeBreakSwitch();
+// getter and setter (for EEPROM)
+int getMode();
+void setMode(int);
+// (de)serializer for EEPROM
+void saveInstrument(Instrument);
+void restoreInstrument(Instrument*);
 
 
 #endif
