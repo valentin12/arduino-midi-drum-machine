@@ -383,7 +383,8 @@ void displayBeat(const int step, const boolean force_redraw) {
   else {
     int part = 4;
     if (local_step == 0)
-      part = 2;
+      // decrease to enlight first beat longer
+      part = 4;
     if (step % (subdivision / numerator)  > subdivision / (numerator * part)) {
       analogWrite(metronome_pin, 0);
     }
