@@ -579,7 +579,7 @@ void setup() {
 }
 
 
-int start_millis;
+unsigned long start_millis;
 
 void loop() {
   start_millis = millis();
