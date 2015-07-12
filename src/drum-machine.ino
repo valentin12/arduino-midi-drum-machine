@@ -578,7 +578,11 @@ void setup() {
   }
 }
 
+
+int start_millis;
+
 void loop() {
+  start_millis = millis();
   if (step_counter > subdivision * max_bars - 1) step_counter = 0;
   computeBreakSwitch();
   computeStep(step_counter);
@@ -611,5 +615,5 @@ void loop() {
     pre_last_pitch = last_pitch;
     last_pitch = pitch;
   }
-  delay(60000 / (bpm * subdivision / numerator));
+  delay((60000 / (bpm * subdivision / numerator)) - (millis() - start_millis));
 }
