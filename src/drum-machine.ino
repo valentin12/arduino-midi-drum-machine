@@ -43,6 +43,9 @@ const int enter_pin = 6;
 // break button
 const int break_pin = 22;
 
+// mute switche
+const int mute_switch_pin = 23;
+
 // MIDI commands
 const int NOTE_ON = 0x90;
 const int CONTROL_CHANGE = 0xB0;
@@ -75,6 +78,10 @@ boolean last_enter;
 // break input variables
 boolean last_break;
 boolean is_break;
+
+// mute input variables
+boolean muted;
+boolean last_muted = false;
 
 // beats per minute
 int last_bpm = 0;
@@ -392,6 +399,9 @@ void displayBeat(const int step, const boolean force_redraw) {
 }
 
 void computeStep(int step) {
+  if (muted) {
+    return;
+  }
   for (int i=0;i<instrument_count;i++) {
     Instrument instr = instrs[i];
     RhythmCollection rhythms = instr.rhythms[mode];
@@ -504,6 +514,14 @@ boolean computeBreakSwitch() {
   return false;
 }
 
+boolean computeMuteSwitch() {
+  muted = !digitalRead(mute_switch_pin);
+  if (muted != last_muted) {
+    return true;
+  }
+  return false;
+}
+
 /* Getter and setter (for EEPROM) */
 int getMode() {
   int mode_eeprom = EEPROM.read(mode_pos);
@@ -562,6 +580,7 @@ void setup() {
   pinMode(enter_pin, INPUT_PULLUP);
 
   pinMode(break_pin, INPUT_PULLUP);
+  pinMode(mute_switch_pin, INPUT_PULLUP);
 
   pinMode(metronome_pin, OUTPUT);
 
@@ -585,6 +604,7 @@ void loop() {
   start_millis = millis();
   if (step_counter > subdivision * max_bars - 1) step_counter = 0;
   computeBreakSwitch();
+  computeMuteSwitch();
   computeStep(step_counter);
   displayBeat(step_counter, false);
   step_counter++;

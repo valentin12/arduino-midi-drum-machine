@@ -81,6 +81,7 @@ void nextView();
 void prevView();
 boolean computeJoystick();
 boolean computeBreakSwitch();
+boolean computeMuteSwitch();
 // getter and setter (for EEPROM)
 int getMode();
 void setMode(int);
