@@ -118,6 +118,9 @@ int denominator = 4;
 const int mode_pos = 0;
 const int instruments_pos = 1024;
 
+// last status byte to implement MIDI running status
+int last_status_byte = 0;
+
 // SCREENS
 class MainView: public View {
   void updateDisplay() {
@@ -353,14 +356,30 @@ View* cur_view = views[view_index];
 
 
 void sendMIDI(const int cmd, const int note, const int velocity) {
+  if (cmd != last_status_byte)
+    Serial1.write(cmd);
+  Serial1.write(note);
+  Serial1.write(velocity);
+  // if (cmd != last_status_byte)
+  //  Serial.write(cmd);
+  // do not use running status over USB. The serial to MIDI
+  // converter has problems with it
   Serial.write(cmd);
   Serial.write(note);
   Serial.write(velocity);
+  last_status_byte = cmd;
 };
 
 void sendShortMIDI(const int cmd, const int val) {
+  if (cmd != last_status_byte)
+    Serial1.write(cmd);
+  Serial1.write(val);
+  // if (cmd != last_status_byte)
+  //   Serial.write(cmd);
+  // see above
   Serial.write(cmd);
   Serial.write(val);
+  last_status_byte = cmd;
 }
 
 void escapeLCDNum(const int number, const int max_digits) {
@@ -586,6 +605,12 @@ void setup() {
 
   lcd.begin(16, 2);
   lcd.print("Setup");
+  // Setup Serial1 with the standard MIDI baud rate of 31250
+  // to get MIDI on TX1 (pin 18)
+  Serial1.begin(31250);
+  while(!Serial1) ;
+  // Setup Serial (TX0 and USB) with the baudrate 115200 to be able to use
+  // an Serial to MIDI converter on a PC
   Serial.begin(115200);
   while(!Serial) ;
   step_counter = 0;
