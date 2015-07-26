@@ -38,7 +38,7 @@ struct Rhythm {
   0 = not playing.
   1 - 0x7f=playing with volume ~
   */
-  const int* notes;
+  const unsigned char* notes;
   int note_count; /* length of *notes* */
 };
 
@@ -94,7 +94,7 @@ void restoreInstrument(Instrument*);
 
 
 // INSTRUMENTS AND RHYTHMS
-const int empty_rhythm_notes[] = {0x00};
+const unsigned char empty_rhythm_notes[] = {0x00};
 Rhythm empty_rhythm = {
   "None", 4, 4, 1, empty_rhythm_notes, 1
 };
@@ -115,35 +115,35 @@ RhythmCollection empty_rhythms[] = {
 
 /* Bass drum */
 /* Bass drum rhythms */
-const int bass_drum_rhythm_4_4_notes[] = {
+const unsigned char bass_drum_rhythm_4_4_notes[] = {
   0x75, 0x60, 0x60, 0x60
 };
 Rhythm bass_drum_rhythm_4_4 = {
   "1-4", 4, 4, 4, bass_drum_rhythm_4_4_notes, 4
 };
 
-const int bass_drum_rhythm_offbeat_notes[] = {
+const unsigned char bass_drum_rhythm_offbeat_notes[] = {
   0x00, 0x60, 0x00, 0x60
 };
 Rhythm bass_drum_rhythm_offbeat = {
   "Off Beat", 4, 4, 4, bass_drum_rhythm_offbeat_notes, 4
 };
 
-const int bass_drum_rhythm_beat_notes[] = {
+const unsigned char bass_drum_rhythm_beat_notes[] = {
   0x75, 0x00, 0x60, 0x00
 };
 Rhythm bass_drum_rhythm_beat = {
   "1+3", 4, 4, 4, bass_drum_rhythm_beat_notes, 4
 };
 
-const int bass_drum_rhythm_eigth_feel_notes[] = {
+const unsigned char bass_drum_rhythm_eigth_feel_notes[] = {
   0x75, 0x00, 0x00, 0x60, 0x60, 0x00, 0x00, 0x00
 };
 Rhythm bass_drum_rhythm_eigth_feel = {
   "1+2(1/2)+3", 4, 4, 8, bass_drum_rhythm_eigth_feel_notes, 8
 };
 
-const int bass_drum_rhythm_linear_notes[] = {
+const unsigned char bass_drum_rhythm_linear_notes[] = {
   0x75, 0x00, 0x00, 0x60, 0x00, 0x00, 0x60, 0x00
 };
 Rhythm bass_drum_rhythm_linear = {
@@ -151,22 +151,14 @@ Rhythm bass_drum_rhythm_linear = {
 };
 
 // Play in triplets, but only on first and last
-const int bass_drum_rhythm_4_4_jazz_notes[] = {
+const unsigned char bass_drum_rhythm_4_4_jazz_notes[] = {
   0x70, 0x00, 0x60, 0x00, 0x00, 0x00, 0x70, 0x00, 0x60, 0x00, 0x00, 0x00
 };
 Rhythm bass_drum_rhythm_4_4_jazz = {
   "one 'let", 4, 4, 12, bass_drum_rhythm_4_4_jazz_notes, 12
 };
-
-const int bass_drum_rhythm_4_4_jazz_add3_notes[] = {
-  0x70, 0x00, 0x60, 0x60, 0x00, 0x00, 0x70, 0x00, 0x60, 0x60, 0x00, 0x00
-};
-Rhythm bass_drum_rhythm_4_4_jazz_add3 = {
-  "1 'let 2", 4, 4, 12, bass_drum_rhythm_4_4_jazz_add3_notes, 12
-};
-
 // 3/4
-const int bass_drum_rhythm_3_4_notes[] = {
+const unsigned char bass_drum_rhythm_3_4_notes[] = {
   0x75, 0x60, 0x60
 };
 Rhythm bass_drum_rhythm_3_4 = {
@@ -209,13 +201,12 @@ RhythmCollection bass_blues_rhythms = {
 // Jazz rhythms
 Rhythm bass_jazz_rhythms_arr[] = {
   bass_drum_rhythm_4_4_jazz,
-  bass_drum_rhythm_4_4_jazz_add3,
   bass_drum_rhythm_4_4,
   bass_drum_rhythm_offbeat,
   bass_drum_rhythm_beat
 };
 RhythmCollection bass_jazz_rhythms = {
-  bass_jazz_rhythms_arr, 5, 0
+  bass_jazz_rhythms_arr, 4, 0
 };
 
 // Waltz rhythms
@@ -235,33 +226,27 @@ RhythmCollection bass_rhythms[] = {
 };
 
 /* bass drum breaks */
-const int bass_drum_break_standard_notes[] = {
-  0x60, 0x60, 0x60, 0x65
-};
-Rhythm bass_drum_break_standard = {
-  "Break 1-4", 4, 4, 4, bass_drum_break_standard_notes, 4
-};
 
 // Standard breaks
-Rhythm bass_standard_breaks_arr[] = {bass_drum_break_standard};
+Rhythm bass_standard_breaks_arr[] = {bass_drum_rhythm_4_4};
 RhythmCollection bass_standard_breaks = {
   bass_standard_breaks_arr, 1, 0
 };
 
 // Rock breaks
-Rhythm bass_rock_breaks_arr[] = {bass_drum_break_standard};
+Rhythm bass_rock_breaks_arr[] = {bass_drum_rhythm_4_4};
 RhythmCollection bass_rock_breaks = {
   bass_rock_breaks_arr, 1, 0
 };
 
 // Blues breaks
-Rhythm bass_blues_breaks_arr[] = {bass_drum_break_standard};
+Rhythm bass_blues_breaks_arr[] = {bass_drum_rhythm_4_4};
 RhythmCollection bass_blues_breaks = {
   bass_blues_breaks_arr, 1, 0
 };
 
 // Jazz breaks
-Rhythm bass_jazz_breaks_arr[] = {bass_drum_break_standard};
+Rhythm bass_jazz_breaks_arr[] = {bass_drum_rhythm_4_4};
 RhythmCollection bass_jazz_breaks = {
   bass_jazz_breaks_arr, 1, 0
 };
@@ -286,17 +271,16 @@ Instrument bass_drum = {
 
 /* Snare drum */
 /* Snare drum rhythms */
-const int snare_drum_rhythm_4_4_offbeat_notes[] = {0, 0x40, 0, 0x40};
+const unsigned char snare_drum_rhythm_4_4_offbeat_notes[] = {0, 0x40, 0, 0x40};
 Rhythm snare_drum_rhythm_4_4_offbeat = {
   "Off Beat", 4, 4, 4, snare_drum_rhythm_4_4_offbeat_notes, 4
 };
 
-const int snare_drum_rhythm_4_4_notes[] = {0x45, 0x40, 0x40, 0x40};
 Rhythm snare_drum_rhythm_4_4 = {
-  "1-4", 4, 4, 4, snare_drum_rhythm_4_4_notes, 4
+  "1-4", 4, 4, 4, bass_drum_rhythm_4_4_notes, 4
 };
 
-const int snare_drum_rhythm_4_4_jazz_notes[] = {
+const unsigned char snare_drum_rhythm_4_4_jazz_notes[] = {
   0x00, 0x00, 0x00, 0x70, 0x00, 0x60, 0x00, 0x00, 0x00, 0x70, 0x00, 0x60
 };
 Rhythm snare_drum_rhythm_4_4_jazz = {
@@ -304,11 +288,11 @@ Rhythm snare_drum_rhythm_4_4_jazz = {
 };
 
 // 3/4
-const int snare_drum_rhythm_3_4_waltz_notes[] = {
-  0x00, 0x60, 0x00
+const unsigned char snare_drum_rhythm_3_4_waltz_offbeat_notes[] = {
+  0x00, 0x60, 0x60
 };
-Rhythm snare_drum_rhythm_3_4_waltz = {
-  "3/4 2", 3, 4, 4, snare_drum_rhythm_3_4_waltz_notes, 3
+Rhythm snare_drum_rhythm_3_4_waltz_offbeat = {
+  "3/4 2+3", 3, 4, 4, snare_drum_rhythm_3_4_waltz_offbeat_notes, 3
 };
 
 // Standard rhythms
@@ -342,9 +326,12 @@ RhythmCollection snare_jazz_rhythms = {
 };
 
 // Waltz rhythms
-Rhythm snare_waltz_rhythms_arr[] = {snare_drum_rhythm_3_4_waltz};
+Rhythm snare_waltz_rhythms_arr[] = {
+  snare_drum_rhythm_3_4_waltz_offbeat,
+  empty_rhythm
+};
 RhythmCollection snare_waltz_rhythms = {
-  snare_waltz_rhythms_arr, 1, 0
+  snare_waltz_rhythms_arr, 2, 0
 };
 
 RhythmCollection snare_rhythms[] = {
@@ -357,21 +344,14 @@ RhythmCollection snare_rhythms[] = {
 
 /* Snare drum breaks */
 
-const int snare_drum_break_4_4_notes[] = {
-  0x60, 0x60, 0x60, 0x65
-};
-Rhythm snare_drum_break_4_4 = {
-  "1-4", 4, 4, 4, snare_drum_break_4_4_notes, 4
-};
-
-const int snare_drum_break_standard_notes[] = {
+const unsigned char snare_drum_break_standard_notes[] = {
   0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x65, 0x00
 };
 Rhythm snare_drum_break_standard = {
   "1-7", 4, 4, 8, snare_drum_break_standard_notes, 8
 };
 
-const int snare_drum_break_lets_notes[] = {
+const unsigned char snare_drum_break_lets_notes[] = {
   0x00, 0x00, 0x60, 0x00, 0x00, 0x60, 0x00, 0x00, 0x60, 0x00, 0x00, 0x60
 };
 Rhythm snare_drum_break_lets = {
@@ -379,7 +359,7 @@ Rhythm snare_drum_break_lets = {
 };
 
 // 3/4
-const int snare_drum_break_3_4_notes[] = {
+const unsigned char snare_drum_break_3_4_notes[] = {
   0x70, 0x00, 0x60, 0x60, 0x00, 0x60, 0x60, 0x00, 0x00
 };
 Rhythm snare_drum_break_3_4 = {
@@ -389,7 +369,7 @@ Rhythm snare_drum_break_3_4 = {
 // Standard breaks
 Rhythm snare_standard_breaks_arr[] = {
   snare_drum_break_standard,
-  snare_drum_break_4_4
+  bass_drum_rhythm_4_4
 };
 RhythmCollection snare_standard_breaks = {
   snare_standard_breaks_arr, 2, 0
@@ -398,7 +378,7 @@ RhythmCollection snare_standard_breaks = {
 // Rock breaks
 Rhythm snare_rock_breaks_arr[] = {
   snare_drum_break_standard,
-  snare_drum_break_4_4
+  bass_drum_rhythm_4_4
 };
 RhythmCollection snare_rock_breaks = {
   snare_rock_breaks_arr, 2, 0
@@ -408,7 +388,7 @@ RhythmCollection snare_rock_breaks = {
 Rhythm snare_blues_breaks_arr[] = {
   empty_rhythm,
   snare_drum_break_lets,
-  snare_drum_break_4_4
+  bass_drum_rhythm_4_4
 };
 RhythmCollection snare_blues_breaks = {
   snare_blues_breaks_arr, 3, 0
@@ -418,7 +398,7 @@ RhythmCollection snare_blues_breaks = {
 Rhythm snare_jazz_breaks_arr[] = {
   empty_rhythm,
   snare_drum_break_lets,
-  snare_drum_break_4_4
+  bass_drum_rhythm_4_4
 };
 RhythmCollection snare_jazz_breaks = {
   snare_jazz_breaks_arr, 3, 0
@@ -445,24 +425,24 @@ Instrument snare_drum = {1, "Snare Drum", 38, A1, snare_rhythms, snare_breaks};
 
 /* Hi-Hat */
 /* Hi-Hat rhythms */
-const int hi_hat_rhythm_4_4_eights_notes[] = {
+const unsigned char hi_hat_rhythm_4_4_eights_notes[] = {
   0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48};
 Rhythm hi_hat_rhythm_4_4_eights = {
   "1-8", 4, 4, 8, hi_hat_rhythm_4_4_eights_notes, 8
 };
-const int hi_hat_rhythm_4_4_triplets_notes[] = {
+const unsigned char hi_hat_rhythm_4_4_triplets_notes[] = {
   0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48
 };
 Rhythm hi_hat_rhythm_4_4_triplets = {
   "1-12", 4, 4, 12, hi_hat_rhythm_4_4_triplets_notes, 12
 };
-const int hi_hat_rhythm_triplets_1_3_notes[] = {
+const unsigned char hi_hat_rhythm_triplets_1_3_notes[] = {
   0x48, 0x00, 0x40, 0x48, 0x00, 0x40, 0x48, 0x00, 0x40, 0x48, 0x00, 0x40
 };
 Rhythm hi_hat_rhythm_triplets_1_3 = {
   "One 'let", 4, 4, 12, hi_hat_rhythm_triplets_1_3_notes, 12
 };
-const int hi_hat_rhythm_offbeat_notes[] = {
+const unsigned char hi_hat_rhythm_offbeat_notes[] = {
   0x00, 0x48, 0x00, 0x48
 };
 Rhythm hi_hat_rhythm_4_4_offbeat = {
@@ -470,15 +450,15 @@ Rhythm hi_hat_rhythm_4_4_offbeat = {
 };
 
 // 3/4
-const int hi_hat_rhythm_3_4_waltz_notes[] = {
+const unsigned char hi_hat_rhythm_3_4_waltz_notes[] = {
   0x70, 0x00, 0x00, 0x70, 0x00, 0x60, 0x70, 0x00, 0x00
 };
 Rhythm hi_hat_rhythm_3_4_waltz = {
   "3/4 1+2+23/3+3", 3, 4, 12, hi_hat_rhythm_3_4_waltz_notes, 9
 };
 
-const int hi_hat_rhythm_3_4_triplets_notes[] = {
-  0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48
+const unsigned char hi_hat_rhythm_3_4_triplets_notes[] = {
+  0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48
 };
 Rhythm hi_hat_rhythm_3_4_triplets = {
   "1-9", 3, 4, 12, hi_hat_rhythm_3_4_triplets_notes, 9
@@ -487,47 +467,52 @@ Rhythm hi_hat_rhythm_3_4_triplets = {
 // Standard rhythms
 Rhythm hi_hat_standard_rhythms_arr[] = {
   hi_hat_rhythm_4_4_eights,
-  hi_hat_rhythm_4_4_offbeat
+  hi_hat_rhythm_4_4_offbeat,
+  empty_rhythm
 };
 RhythmCollection hi_hat_standard_rhythms = {
-  hi_hat_standard_rhythms_arr, 2, 0
+  hi_hat_standard_rhythms_arr, 3, 0
 };
 
 // Rock rhythms
 Rhythm hi_hat_rock_rhythms_arr[] = {
   hi_hat_rhythm_4_4_eights,
-  hi_hat_rhythm_4_4_offbeat
+  hi_hat_rhythm_4_4_offbeat,
+  empty_rhythm
 };
 RhythmCollection hi_hat_rock_rhythms = {
-  hi_hat_rock_rhythms_arr, 2, 0
+  hi_hat_rock_rhythms_arr, 3, 0
 };
 
 // Blues rhythms
 Rhythm hi_hat_blues_rhythms_arr[] = {
+  empty_rhythm,
   hi_hat_rhythm_4_4_triplets,
   hi_hat_rhythm_triplets_1_3
 };
 RhythmCollection hi_hat_blues_rhythms = {
-  hi_hat_blues_rhythms_arr, 2, 0
+  hi_hat_blues_rhythms_arr, 3, 0
 };
 
 // Jazz rhythms
 Rhythm hi_hat_jazz_rhythms_arr[] = {
+  empty_rhythm,
   hi_hat_rhythm_4_4_offbeat,
   hi_hat_rhythm_triplets_1_3,
   hi_hat_rhythm_4_4_triplets
 };
 RhythmCollection hi_hat_jazz_rhythms = {
-  hi_hat_jazz_rhythms_arr, 3, 0
+  hi_hat_jazz_rhythms_arr, 4, 0
 };
 
 // Waltz rhythms
 Rhythm hi_hat_waltz_rhythms_arr[] = {
+  empty_rhythm,
   hi_hat_rhythm_3_4_waltz,
   hi_hat_rhythm_3_4_triplets
 };
 RhythmCollection hi_hat_waltz_rhythms = {
-  hi_hat_waltz_rhythms_arr, 2, 0
+  hi_hat_waltz_rhythms_arr, 3, 0
 };
 
 RhythmCollection hi_hat_rhythms[] = {
@@ -539,7 +524,7 @@ RhythmCollection hi_hat_rhythms[] = {
 };
 
 /* Hi-Hat breaks */
-const int hi_hat_break_standard_notes[] = {
+const unsigned char hi_hat_break_standard_notes[] = {
   0x60, 0x60, 0x60, 0x65
 };
 Rhythm hi_hat_break_standard = {
@@ -549,49 +534,54 @@ Rhythm hi_hat_break_standard = {
 // Standard breaks
 Rhythm hi_hat_standard_breaks_arr[] = {
   hi_hat_break_standard,
-  hi_hat_rhythm_4_4_eights
+  hi_hat_rhythm_4_4_eights,
+  empty_rhythm
 };
 RhythmCollection hi_hat_standard_breaks = {
-  hi_hat_standard_breaks_arr, 2, 0
+  hi_hat_standard_breaks_arr, 3, 0
 };
 
 // Rock breaks
 Rhythm hi_hat_rock_breaks_arr[] = {
   hi_hat_break_standard,
-  hi_hat_rhythm_4_4_eights
+  hi_hat_rhythm_4_4_eights,
+  empty_rhythm
 };
 RhythmCollection hi_hat_rock_breaks = {
-  hi_hat_rock_breaks_arr, 2, 0
+  hi_hat_rock_breaks_arr, 3, 0
 };
 
 // Blues breaks
 Rhythm hi_hat_blues_breaks_arr[] = {
+  empty_rhythm,
   hi_hat_break_standard,
   hi_hat_rhythm_4_4_offbeat,
   hi_hat_rhythm_triplets_1_3,
   hi_hat_rhythm_4_4_triplets
 };
 RhythmCollection hi_hat_blues_breaks = {
-  hi_hat_blues_breaks_arr, 4, 0
+  hi_hat_blues_breaks_arr, 5, 0
 };
 
 // Jazz breaks
 Rhythm hi_hat_jazz_breaks_arr[] = {
+  empty_rhythm,
   hi_hat_break_standard,
   hi_hat_rhythm_4_4_offbeat,
   hi_hat_rhythm_triplets_1_3,
   hi_hat_rhythm_4_4_triplets
 };
 RhythmCollection hi_hat_jazz_breaks = {
-  hi_hat_jazz_breaks_arr, 4, 0
+  hi_hat_jazz_breaks_arr, 5, 0
 };
 
 // Waltz breaks
 Rhythm hi_hat_waltz_breaks_arr[] = {
+  empty_rhythm,
   hi_hat_rhythm_3_4_triplets
 };
 RhythmCollection hi_hat_waltz_breaks = {
-  hi_hat_waltz_breaks_arr, 1, 0
+  hi_hat_waltz_breaks_arr, 2, 0
 };
 
 RhythmCollection hi_hat_breaks[] = {
@@ -611,13 +601,13 @@ Instrument hi_hat = {2, "Hi-Hat", 42, A2, hi_hat_rhythms, hi_hat_breaks};
 RhythmCollection* splash_rhythms = empty_rhythms;
 
 /* Splash breaks */
-const int splash_break_eigth_notes[] = {
+const unsigned char splash_break_eigth_notes[] = {
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x50
 };
 Rhythm splash_break_eigth = {
   "8", 4, 4, 8, splash_break_eigth_notes, 8
 };
-const int splash_break_4_4_notes[] = {
+const unsigned char splash_break_4_4_notes[] = {
   0x00, 0x00, 0x00, 0x50
 };
 Rhythm splash_break_4_4 = {
@@ -625,7 +615,7 @@ Rhythm splash_break_4_4 = {
 };
 
 // 3/4
-const int splash_break_3_4_notes[] = {
+const unsigned char splash_break_3_4_notes[] = {
   0x00, 0x00, 0x50
 };
 Rhythm splash_break_3_4 = {
@@ -672,7 +662,138 @@ RhythmCollection splash_breaks[] = {
 
 Instrument splash = {3, "Splash", 49, A2, splash_rhythms, splash_breaks};
 
+
+/* Ride */
+/* Ride rhythms */
+// take the ones of hi-hat
+
+// Standard rhythms
+Rhythm ride_standard_rhythms_arr[] = {
+  empty_rhythm,
+  hi_hat_rhythm_4_4_eights,
+  hi_hat_rhythm_4_4_offbeat
+};
+RhythmCollection ride_standard_rhythms = {
+  ride_standard_rhythms_arr, 3, 0
+};
+
+// Rock rhythms
+Rhythm ride_rock_rhythms_arr[] = {
+  empty_rhythm,
+  hi_hat_rhythm_4_4_eights,
+  hi_hat_rhythm_4_4_offbeat
+};
+RhythmCollection ride_rock_rhythms = {
+  ride_rock_rhythms_arr, 3, 0
+};
+
+// Blues rhythms
+Rhythm ride_blues_rhythms_arr[] = {
+  hi_hat_rhythm_4_4_triplets,
+  hi_hat_rhythm_triplets_1_3,
+  empty_rhythm
+};
+RhythmCollection ride_blues_rhythms = {
+  ride_blues_rhythms_arr, 3, 0
+};
+
+// Jazz rhythms
+Rhythm ride_jazz_rhythms_arr[] = {
+  hi_hat_rhythm_4_4_offbeat,
+  hi_hat_rhythm_triplets_1_3,
+  hi_hat_rhythm_4_4_triplets,
+  empty_rhythm
+};
+RhythmCollection ride_jazz_rhythms = {
+  ride_jazz_rhythms_arr, 4, 0
+};
+
+// Waltz rhythms
+Rhythm ride_waltz_rhythms_arr[] = {
+  hi_hat_rhythm_3_4_waltz,
+  hi_hat_rhythm_3_4_triplets,
+  empty_rhythm
+};
+RhythmCollection ride_waltz_rhythms = {
+  ride_waltz_rhythms_arr, 3, 0
+};
+
+RhythmCollection ride_rhythms[] = {
+  ride_standard_rhythms,
+  ride_rock_rhythms,
+  ride_blues_rhythms,
+  ride_jazz_rhythms,
+  ride_waltz_rhythms
+};
+
+/* Ride breaks */
+Rhythm ride_break_standard = hi_hat_break_standard;
+
+// Standard breaks
+Rhythm ride_standard_breaks_arr[] = {
+  empty_rhythm,
+  ride_break_standard,
+  hi_hat_rhythm_4_4_eights
+};
+RhythmCollection ride_standard_breaks = {
+  ride_standard_breaks_arr, 3, 0
+};
+
+// Rock breaks
+Rhythm ride_rock_breaks_arr[] = {
+  empty_rhythm,
+  ride_break_standard,
+  hi_hat_rhythm_4_4_eights
+};
+RhythmCollection ride_rock_breaks = {
+  ride_rock_breaks_arr, 3, 0
+};
+
+// Blues breaks
+Rhythm ride_blues_breaks_arr[] = {
+  empty_rhythm,
+  ride_break_standard,
+  hi_hat_rhythm_4_4_offbeat,
+  hi_hat_rhythm_triplets_1_3,
+  hi_hat_rhythm_4_4_triplets
+};
+RhythmCollection ride_blues_breaks = {
+  ride_blues_breaks_arr, 5, 0
+};
+
+// Jazz breaks
+Rhythm ride_jazz_breaks_arr[] = {
+  empty_rhythm,
+  ride_break_standard,
+  hi_hat_rhythm_4_4_offbeat,
+  hi_hat_rhythm_triplets_1_3,
+  hi_hat_rhythm_4_4_triplets
+};
+RhythmCollection ride_jazz_breaks = {
+  ride_jazz_breaks_arr, 5, 0
+};
+
+// Waltz breaks
+Rhythm ride_waltz_breaks_arr[] = {
+  empty_rhythm,
+  hi_hat_rhythm_3_4_triplets
+};
+RhythmCollection ride_waltz_breaks = {
+  ride_waltz_breaks_arr, 2, 0
+};
+
+RhythmCollection ride_breaks[] = {
+  ride_standard_breaks,
+  ride_rock_breaks,
+  ride_blues_breaks,
+  ride_jazz_breaks,
+  ride_waltz_breaks
+};
+
+Instrument ride = {4, "Ride", 51, A2, ride_rhythms, ride_breaks};
+
+
 /* Instrument list */
-Instrument instrs[] = {bass_drum, snare_drum, hi_hat, splash};
-const int instrument_count = 4;
+Instrument instrs[] = {bass_drum, snare_drum, hi_hat, splash, ride};
+const int instrument_count = 5;
 #endif

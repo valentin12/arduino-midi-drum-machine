@@ -34,23 +34,23 @@ LiquidCrystal lcd(7, 8, 9, 10, 11, 12);
 const int metronome_pin = 13;
 
 // Joystick
-const int up_pin = 2;
-const int down_pin = 3;
-const int left_pin = 4;
-const int right_pin = 5;
-const int enter_pin = 6;
+const char up_pin = 2;
+const char down_pin = 3;
+const char left_pin = 4;
+const char right_pin = 5;
+const char enter_pin = 6;
 
 // break button
-const int break_pin = 22;
+const char break_pin = 22;
 
 // mute switche
-const int mute_switch_pin = 23;
+const char mute_switch_pin = 23;
 
 // MIDI commands
-const int NOTE_ON = 0x90;
-const int CONTROL_CHANGE = 0xB0;
-const int PROGRAM_CHANGE = 0xC0;
-const int PITCH_BEND_CHANGE = 0xE0;
+const unsigned char NOTE_ON = 0x90;
+const unsigned char CONTROL_CHANGE = 0xB0;
+const unsigned char PROGRAM_CHANGE = 0xC0;
+const unsigned char PITCH_BEND_CHANGE = 0xE0;
 
 
 // Styles
@@ -61,8 +61,8 @@ enum class Mode : int {
   JAZZ,
   WALTZ
 };
-const int mode_count = 5;
-const char mode_names[mode_count][32] = {
+const unsigned char mode_count = 5;
+const char mode_names[mode_count][17] = {
   "Standard", "Rock", "Blues", "Jazz", "Waltz"
 };
 boolean mode_break_mute[] = {
@@ -102,7 +102,7 @@ int pre_last_vol = 0;
 int vol;
 const int vol_pin = A8;
 
-int drum_channel = 9;
+unsigned char drum_channel = 9;
 
 // subdivision of one bar
 const int subdivision = 96;
@@ -117,10 +117,10 @@ int denominator = 4;
 
 // EEPROM addresses
 const int mode_pos = 0;
-const int instruments_pos = 1024;
+const int instruments_pos = 256;
 
 // last status byte to implement MIDI running status
-int last_status_byte = 0;
+unsigned char last_status_byte = 0;
 
 // SCREENS
 class MainView: public View {
@@ -360,8 +360,8 @@ View* cur_view = views[view_index];
 
 
 void sendMIDI(const int cmd, const int note, const int velocity) {
-  if (cmd != last_status_byte)
-    Serial1.write(cmd);
+  // if (cmd != last_status_byte)
+  Serial1.write(cmd);
   Serial1.write(note);
   Serial1.write(velocity);
   // if (cmd != last_status_byte)
@@ -656,14 +656,14 @@ void setup() {
 
   lcd.begin(16, 2);
   lcd.print("Setup");
+  // Setup Serial (TX0 and USB) with the baudrate 115200 to be able to use
+  // an Serial to MIDI converter on a PC
+  Serial.begin(9600);
+  while(!Serial) ;
   // Setup Serial1 with the standard MIDI baud rate of 31250
   // to get MIDI on TX1 (pin 18)
   Serial1.begin(31250);
   while(!Serial1) ;
-  // Setup Serial (TX0 and USB) with the baudrate 115200 to be able to use
-  // an Serial to MIDI converter on a PC
-  Serial.begin(115200);
-  while(!Serial) ;
   step_counter = 0;
 
   // Read EEPROM content
