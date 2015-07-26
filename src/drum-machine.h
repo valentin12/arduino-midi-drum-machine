@@ -82,6 +82,9 @@ void prevView();
 boolean computeJoystick();
 boolean computeBreakSwitch();
 boolean computeMuteSwitch();
+long getDelay(long);
+int getLocalStep(int, int, int);
+boolean isLocalStep(int, int);
 // getter and setter (for EEPROM)
 int getMode();
 void setMode(int);
@@ -103,6 +106,7 @@ RhythmCollection empty_rhythm_collection = {
   empty_rhythm_collection_arr, 1, 0
 };
 RhythmCollection empty_rhythms[] = {
+  empty_rhythm_collection,
   empty_rhythm_collection,
   empty_rhythm_collection,
   empty_rhythm_collection,
@@ -161,6 +165,14 @@ Rhythm bass_drum_rhythm_4_4_jazz_add3 = {
   "1 'let 2", 4, 4, 12, bass_drum_rhythm_4_4_jazz_add3_notes, 12
 };
 
+// 3/4
+const int bass_drum_rhythm_3_4_notes[] = {
+  0x75, 0x60, 0x60
+};
+Rhythm bass_drum_rhythm_3_4 = {
+  "3/4 1-3", 3, 4, 4, bass_drum_rhythm_3_4_notes, 3
+};
+
 // Standard rhythms
 Rhythm bass_standard_rhythms_arr[] = {
   bass_drum_rhythm_4_4,
@@ -206,11 +218,20 @@ RhythmCollection bass_jazz_rhythms = {
   bass_jazz_rhythms_arr, 5, 0
 };
 
+// Waltz rhythms
+Rhythm bass_waltz_rhythms_arr[] = {
+  bass_drum_rhythm_3_4
+};
+RhythmCollection bass_waltz_rhythms = {
+  bass_waltz_rhythms_arr, 1, 0
+};
+
 RhythmCollection bass_rhythms[] = {
   bass_standard_rhythms,
   bass_rock_rhythms,
   bass_blues_rhythms,
-  bass_jazz_rhythms
+  bass_jazz_rhythms,
+  bass_waltz_rhythms
 };
 
 /* bass drum breaks */
@@ -245,11 +266,18 @@ RhythmCollection bass_jazz_breaks = {
   bass_jazz_breaks_arr, 1, 0
 };
 
+// Waltz breaks
+Rhythm bass_waltz_breaks_arr[] = {bass_drum_rhythm_3_4};
+RhythmCollection bass_waltz_breaks = {
+  bass_waltz_breaks_arr, 1, 0
+};
+
 RhythmCollection bass_breaks[] = {
   bass_standard_breaks,
   bass_rock_breaks,
   bass_blues_breaks,
-  bass_jazz_breaks
+  bass_jazz_breaks,
+  bass_waltz_breaks
 };
 
 Instrument bass_drum = {
@@ -273,6 +301,14 @@ const int snare_drum_rhythm_4_4_jazz_notes[] = {
 };
 Rhythm snare_drum_rhythm_4_4_jazz = {
   "2+4: 1+3", 4, 4, 12, snare_drum_rhythm_4_4_jazz_notes, 12
+};
+
+// 3/4
+const int snare_drum_rhythm_3_4_waltz_notes[] = {
+  0x00, 0x60, 0x00
+};
+Rhythm snare_drum_rhythm_3_4_waltz = {
+  "3/4 2", 3, 4, 4, snare_drum_rhythm_3_4_waltz_notes, 3
 };
 
 // Standard rhythms
@@ -305,11 +341,18 @@ RhythmCollection snare_jazz_rhythms = {
   snare_jazz_rhythms_arr, 1, 0
 };
 
+// Waltz rhythms
+Rhythm snare_waltz_rhythms_arr[] = {snare_drum_rhythm_3_4_waltz};
+RhythmCollection snare_waltz_rhythms = {
+  snare_waltz_rhythms_arr, 1, 0
+};
+
 RhythmCollection snare_rhythms[] = {
   snare_standard_rhythms,
   snare_rock_rhythms,
   snare_blues_rhythms,
-  snare_jazz_rhythms
+  snare_jazz_rhythms,
+  snare_waltz_rhythms
 };
 
 /* Snare drum breaks */
@@ -333,6 +376,14 @@ const int snare_drum_break_lets_notes[] = {
 };
 Rhythm snare_drum_break_lets = {
   "'let", 4, 4, 12, snare_drum_break_lets_notes, 12
+};
+
+// 3/4
+const int snare_drum_break_3_4_notes[] = {
+  0x70, 0x00, 0x60, 0x60, 0x00, 0x60, 0x60, 0x00, 0x00
+};
+Rhythm snare_drum_break_3_4 = {
+  "one'let", 3, 4, 12, snare_drum_break_3_4_notes, 9
 };
 
 // Standard breaks
@@ -373,11 +424,21 @@ RhythmCollection snare_jazz_breaks = {
   snare_jazz_breaks_arr, 3, 0
 };
 
+// Waltz breaks
+Rhythm snare_waltz_breaks_arr[] = {
+  empty_rhythm,
+  snare_drum_break_3_4,
+};
+RhythmCollection snare_waltz_breaks = {
+  snare_waltz_breaks_arr, 2, 0
+};
+
 RhythmCollection snare_breaks[] = {
   snare_standard_breaks,
   snare_rock_breaks,
   snare_blues_breaks,
-  snare_jazz_breaks
+  snare_jazz_breaks,
+  snare_waltz_breaks
 };
 
 Instrument snare_drum = {1, "Snare Drum", 38, A1, snare_rhythms, snare_breaks};
@@ -406,6 +467,21 @@ const int hi_hat_rhythm_offbeat_notes[] = {
 };
 Rhythm hi_hat_rhythm_4_4_offbeat = {
   "Off Beat", 4, 4, 4, hi_hat_rhythm_offbeat_notes, 4
+};
+
+// 3/4
+const int hi_hat_rhythm_3_4_waltz_notes[] = {
+  0x70, 0x00, 0x00, 0x70, 0x00, 0x60, 0x70, 0x00, 0x00
+};
+Rhythm hi_hat_rhythm_3_4_waltz = {
+  "3/4 1+2+23/3+3", 3, 4, 12, hi_hat_rhythm_3_4_waltz_notes, 9
+};
+
+const int hi_hat_rhythm_3_4_triplets_notes[] = {
+  0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48
+};
+Rhythm hi_hat_rhythm_3_4_triplets = {
+  "1-9", 3, 4, 12, hi_hat_rhythm_3_4_triplets_notes, 9
 };
 
 // Standard rhythms
@@ -445,11 +521,21 @@ RhythmCollection hi_hat_jazz_rhythms = {
   hi_hat_jazz_rhythms_arr, 3, 0
 };
 
+// Waltz rhythms
+Rhythm hi_hat_waltz_rhythms_arr[] = {
+  hi_hat_rhythm_3_4_waltz,
+  hi_hat_rhythm_3_4_triplets
+};
+RhythmCollection hi_hat_waltz_rhythms = {
+  hi_hat_waltz_rhythms_arr, 2, 0
+};
+
 RhythmCollection hi_hat_rhythms[] = {
   hi_hat_standard_rhythms,
   hi_hat_rock_rhythms,
   hi_hat_blues_rhythms,
-  hi_hat_jazz_rhythms
+  hi_hat_jazz_rhythms,
+  hi_hat_waltz_rhythms
 };
 
 /* Hi-Hat breaks */
@@ -500,11 +586,20 @@ RhythmCollection hi_hat_jazz_breaks = {
   hi_hat_jazz_breaks_arr, 4, 0
 };
 
+// Waltz breaks
+Rhythm hi_hat_waltz_breaks_arr[] = {
+  hi_hat_rhythm_3_4_triplets
+};
+RhythmCollection hi_hat_waltz_breaks = {
+  hi_hat_waltz_breaks_arr, 1, 0
+};
+
 RhythmCollection hi_hat_breaks[] = {
   hi_hat_standard_breaks,
   hi_hat_rock_breaks,
   hi_hat_blues_breaks,
-  hi_hat_jazz_breaks
+  hi_hat_jazz_breaks,
+  hi_hat_waltz_breaks
 };
 
 Instrument hi_hat = {2, "Hi-Hat", 42, A2, hi_hat_rhythms, hi_hat_breaks};
@@ -527,6 +622,14 @@ const int splash_break_4_4_notes[] = {
 };
 Rhythm splash_break_4_4 = {
   "4", 4, 4, 4, splash_break_4_4_notes, 4
+};
+
+// 3/4
+const int splash_break_3_4_notes[] = {
+  0x00, 0x00, 0x50
+};
+Rhythm splash_break_3_4 = {
+  "4", 3, 4, 4, splash_break_3_4_notes, 3
 };
 
 // Standard breaks
@@ -553,11 +656,18 @@ RhythmCollection splash_jazz_breaks = {
   splash_jazz_breaks_arr, 1, 0
 };
 
+// Waltz breaks
+Rhythm splash_waltz_breaks_arr[] = {splash_break_3_4};
+RhythmCollection splash_waltz_breaks = {
+  splash_waltz_breaks_arr, 1, 0
+};
+
 RhythmCollection splash_breaks[] = {
   splash_standard_breaks,
   splash_rock_breaks,
   splash_blues_breaks,
-  splash_jazz_breaks
+  splash_jazz_breaks,
+  splash_waltz_breaks
 };
 
 Instrument splash = {3, "Splash", 49, A2, splash_rhythms, splash_breaks};

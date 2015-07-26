@@ -58,14 +58,15 @@ enum class Mode : int {
   STD,
   ROCK,
   BLUES,
-  JAZZ
+  JAZZ,
+  WALTZ
 };
-const int mode_count = 4;
+const int mode_count = 5;
 const char mode_names[mode_count][32] = {
-  "Standard", "Rock", "Blues", "Jazz"
+  "Standard", "Rock", "Blues", "Jazz", "Waltz"
 };
 boolean mode_break_mute[] = {
-  true, true, true, true
+  true, true, true, true, true
 };
 
 // last joystick input
@@ -76,11 +77,11 @@ boolean last_right;
 boolean last_enter;
 
 // break input variables
-boolean last_break;
-boolean is_break;
+boolean last_break = false;
+boolean is_break = false;
 
 // mute input variables
-boolean muted;
+boolean muted = false;
 boolean last_muted = false;
 
 // beats per minute
@@ -104,10 +105,10 @@ const int vol_pin = A8;
 int drum_channel = 9;
 
 // subdivision of one bar
-const int subdivision = 48;
+const int subdivision = 96;
 int max_bars = 96;
 
-int step_counter;
+long step_counter;
 
 int mode = (int) Mode::STD;
 
@@ -127,6 +128,9 @@ class MainView: public View {
     // clear display
     lcd.clear();
     lcd.home();
+    if (muted) {
+      lcd.print("#");
+    }
     // write mode name
     lcd.print(mode_names[mode]);
     lcd.setCursor(0, 1);
@@ -390,9 +394,9 @@ void escapeLCDNum(const int number, const int max_digits) {
 }
 
 void displayBeat(const int step, const boolean force_redraw) {
-  int local_step = step / (subdivision / numerator) % numerator;
+  int local_step = (step / subdivision) % numerator;
   if (force_redraw || step == 0 ||
-      local_step != (step - 1) / (subdivision / numerator) % numerator) {
+      local_step != ((step - 1) / subdivision) % numerator) {
     // LCD
     lcd.setCursor(14, 0);
     escapeLCDNum(local_step + 1, 2);
@@ -400,7 +404,7 @@ void displayBeat(const int step, const boolean force_redraw) {
 
   // LED
   if (step == 0 ||
-      local_step != (step - 1) / (subdivision / numerator) % numerator) {
+      local_step != ((step - 1) / subdivision) % numerator) {
     if (local_step == 0)
       analogWrite(metronome_pin, 0xff);
     else
@@ -411,7 +415,7 @@ void displayBeat(const int step, const boolean force_redraw) {
     if (local_step == 0)
       // decrease to enlight first beat longer
       part = 4;
-    if (step % (subdivision / numerator)  > subdivision / (numerator * part)) {
+    if (step % subdivision  > subdivision / part) {
       analogWrite(metronome_pin, 0);
     }
   }
@@ -443,9 +447,9 @@ void computeStep(int step) {
           continue;
         }
       }
-      if (step % (subdivision / r.subdivision) != 0)
+      if (!isLocalStep(step, r.subdivision))
         continue;
-      int local_step = step / (subdivision / r.subdivision) % r.note_count;
+      int local_step = getLocalStep(step, r.subdivision, r.note_count);
       if (r.notes[local_step] > 0) {
         int note_vol = r.notes[local_step] * (analogRead(instr.input_pin) / 1023.0);
         if (vol > 0 && note_vol > 0) {
@@ -526,6 +530,7 @@ boolean computeJoystick() {
 }
 
 boolean computeBreakSwitch() {
+  last_break = is_break;
   is_break = !digitalRead(break_pin);
   if (is_break != last_break) {
     return true;
@@ -534,11 +539,41 @@ boolean computeBreakSwitch() {
 }
 
 boolean computeMuteSwitch() {
+  last_muted = muted;
   muted = !digitalRead(mute_switch_pin);
   if (muted != last_muted) {
     return true;
   }
   return false;
+}
+
+long getDelay(long sub) {
+  /* sub: Subtract from delay */
+  // 1 minute (60000 milliseconds)
+  // divide by beats per minute
+  // divide by subdivision
+  long delay_time = 60000 / bpm / subdivision - sub;
+  if (delay_time > 0)
+    return delay_time;
+  return 0;
+}
+
+int getLocalStep(int global_step, int r_subdiv, int r_note_count) {
+  /*
+   * Step: global step
+   * r_subdiv: Subdivision of rhythm
+   * r_note_count: Number of notes in rhythm
+  */
+  // global step (beats since start * subdivision)
+  return global_step / (subdivision / (r_subdiv / denominator)) % r_note_count;
+}
+boolean isLocalStep(int global_step, int r_subdiv) {
+  /*
+   * Step: global step
+   * r_subdiv: Subdivision of rhythm
+  */
+  return r_subdiv != 0
+         && global_step % (subdivision / (r_subdiv / denominator)) == 0;
 }
 
 /* Getter and setter (for EEPROM) */
@@ -551,6 +586,14 @@ int getMode() {
 }
 
 void setMode(int new_mode) {
+  if (new_mode == (int) Mode::WALTZ) {
+    numerator = 3;
+    denominator = 4;
+  }
+  else {
+    numerator = 4;
+    denominator = 4;
+  }
   if (mode != new_mode) {
     mode = new_mode;
     EEPROM_update(mode_pos, mode);
@@ -582,10 +625,18 @@ void restoreInstrument(Instrument* instr) {
   cur_pos++;
   for (int i=0;i<mode_count;i++) {
     instr->rhythms[i].cur_rhythm = EEPROM.read(cur_pos + i);
+    if (instr->rhythms[i].cur_rhythm >= instr->rhythms[i].rhythm_count) {
+      instr->rhythms[i].cur_rhythm = 0;
+      EEPROM_update(cur_pos + i, 0);
+    }
   }
   cur_pos += MAX_MODES;
   for (int i=0;i<mode_count;i++) {
     instr->breaks[i].cur_rhythm = EEPROM.read(cur_pos + i);
+    if (instr->breaks[i].cur_rhythm >= instr->breaks[i].rhythm_count) {
+      instr->breaks[i].cur_rhythm = 0;
+      EEPROM_update(cur_pos + i, 0);
+    }
   }
   cur_pos += MAX_MODES;
 }
@@ -617,9 +668,11 @@ void setup() {
 
   // Read EEPROM content
   mode = getMode();
+  setMode(mode);
   for (int i=0;i<instrument_count;i++) {
     restoreInstrument(&instrs[i]);
   }
+  muted = !digitalRead(mute_switch_pin);
 }
 
 
@@ -629,7 +682,9 @@ void loop() {
   start_millis = millis();
   if (step_counter > subdivision * max_bars - 1) step_counter = 0;
   computeBreakSwitch();
-  computeMuteSwitch();
+  if (computeMuteSwitch()) {
+    cur_view->updateDisplay();
+  }
   computeStep(step_counter);
   displayBeat(step_counter, false);
   step_counter++;
@@ -660,5 +715,5 @@ void loop() {
     pre_last_pitch = last_pitch;
     last_pitch = pitch;
   }
-  delay((60000 / (bpm * subdivision / numerator)) - (millis() - start_millis));
+  delay(getDelay(millis() - start_millis));
 }
