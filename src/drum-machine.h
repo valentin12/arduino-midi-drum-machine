@@ -22,6 +22,8 @@
 const int MAX_MODES = 30;
 const int INSTR_STORE_MAX_SIZE = 80;
 
+const int RHYTHM_MAX_NOTES = 128;
+
 struct Rhythm {
   /* Describes the rhythm for a time signature for an instrument */
   char name[32];
@@ -38,12 +40,16 @@ struct Rhythm {
   0 = not playing.
   1 - 0x7f=playing with volume ~
   */
-  const unsigned char* notes;
+  unsigned char* notes;
   int note_count; /* length of *notes* */
 };
 
+// Functions to set parameters of a Rhythm instance.
+// All rhythm data in local function -> less RAM usage
+typedef void (*r_func)(Rhythm*);
+
 struct RhythmCollection {
-  Rhythm* rhythms;
+  r_func* rhythms;
   int rhythm_count;
   int cur_rhythm;
 };
@@ -57,6 +63,9 @@ struct Instrument {
 
   RhythmCollection* rhythms;
   RhythmCollection* breaks;
+
+  Rhythm cur_rhythm;
+  Rhythm cur_break;
 };
 
 class View {
@@ -85,6 +94,7 @@ boolean computeMuteSwitch();
 long getDelay(long);
 int getLocalStep(int, int, int);
 boolean isLocalStep(int, int);
+void updateRhythms();
 // getter and setter (for EEPROM)
 int getMode();
 void setMode(int);
@@ -94,12 +104,19 @@ void restoreInstrument(Instrument*);
 
 
 // INSTRUMENTS AND RHYTHMS
-const unsigned char empty_rhythm_notes[] = {0x00};
-Rhythm empty_rhythm = {
-  "None", 4, 4, 1, empty_rhythm_notes, 1
-};
+void empty_rhythm(Rhythm* r) {
+  const unsigned char notes[] = {0x00};
+  strcpy(r->name, "None");
+  r->numerator = 4;
+  r->denominator = 4;
+  r->subdivision = 1;
+  r->note_count = 1;
+  for (int n=0;n < r->note_count;n++) {
+    r->notes[n] = notes[n];
+  }
+}
 
-Rhythm empty_rhythm_collection_arr[] {
+r_func empty_rhythm_collection_arr[] {
   empty_rhythm
 };
 RhythmCollection empty_rhythm_collection = {
@@ -115,58 +132,107 @@ RhythmCollection empty_rhythms[] = {
 
 /* Bass drum */
 /* Bass drum rhythms */
-const unsigned char bass_drum_rhythm_4_4_notes[] = {
-  0x75, 0x60, 0x60, 0x60
-};
-Rhythm bass_drum_rhythm_4_4 = {
-  "1-4", 4, 4, 4, bass_drum_rhythm_4_4_notes, 4
-};
+void bass_drum_rhythm_4_4(Rhythm* r) {
+  const unsigned char notes[] = {
+    0x75, 0x60, 0x60, 0x60
+  };
+  strcpy(r->name, "1-4");
+  r->numerator = 4;
+  r->denominator = 4;
+  r->subdivision = 4;
+  r->note_count = 4;
+  for (int n=0;n < r->note_count;n++) {
+    r->notes[n] = notes[n];
+  }
+}
 
-const unsigned char bass_drum_rhythm_offbeat_notes[] = {
-  0x00, 0x60, 0x00, 0x60
-};
-Rhythm bass_drum_rhythm_offbeat = {
-  "Off Beat", 4, 4, 4, bass_drum_rhythm_offbeat_notes, 4
-};
+void bass_drum_rhythm_offbeat(Rhythm* r) {
+  const unsigned char notes[] = {
+    0x00, 0x60, 0x00, 0x60
+  };
+  strcpy(r->name, "Off Beat");
+  r->numerator = 4;
+  r->denominator = 4;
+  r->subdivision = 4;
+  r->note_count = 4;
+  for (int n=0;n < r->note_count;n++) {
+    r->notes[n] = notes[n];
+  }
+}
 
-const unsigned char bass_drum_rhythm_beat_notes[] = {
-  0x75, 0x00, 0x60, 0x00
-};
-Rhythm bass_drum_rhythm_beat = {
-  "1+3", 4, 4, 4, bass_drum_rhythm_beat_notes, 4
-};
+void bass_drum_rhythm_beat(Rhythm* r) {
+  const unsigned char notes[] = {
+    0x75, 0x00, 0x60, 0x00
+  };
+  strcpy(r->name, "1+3");
+  r->numerator = 4;
+  r->denominator = 4;
+  r->subdivision = 4;
+  r->note_count = 4;
+  for (int n=0;n < r->note_count;n++) {
+    r->notes[n] = notes[n];
+  }
+}
 
-const unsigned char bass_drum_rhythm_eigth_feel_notes[] = {
-  0x75, 0x00, 0x00, 0x60, 0x60, 0x00, 0x00, 0x00
-};
-Rhythm bass_drum_rhythm_eigth_feel = {
-  "1+2(1/2)+3", 4, 4, 8, bass_drum_rhythm_eigth_feel_notes, 8
-};
+void bass_drum_rhythm_eigth_feel(Rhythm* r) {
+  const unsigned char notes[] = {
+    0x75, 0x00, 0x00, 0x60, 0x60, 0x00, 0x00, 0x00
+  };
+  strcpy(r->name, "1+2(1/2)+3");
+  r->numerator = 4;
+  r->denominator = 4;
+  r->subdivision = 8;
+  r->note_count = 8;
+  for (int n=0;n < r->note_count;n++) {
+    r->notes[n] = notes[n];
+  }
+}
 
-const unsigned char bass_drum_rhythm_linear_notes[] = {
-  0x75, 0x00, 0x00, 0x60, 0x00, 0x00, 0x60, 0x00
-};
-Rhythm bass_drum_rhythm_linear = {
-  "1+2(1/2)+4", 4, 4, 8, bass_drum_rhythm_linear_notes, 8
-};
+void bass_drum_rhythm_linear(Rhythm* r) {
+  const unsigned char notes[] = {
+    0x75, 0x00, 0x00, 0x60, 0x00, 0x00, 0x60, 0x00
+  };
+  strcpy(r->name, "1+2(1/2)+4");
+  r->numerator = 4;
+  r->denominator = 4;
+  r->subdivision = 8;
+  r->note_count = 8;
+  for (int n=0;n < r->note_count;n++) {
+    r->notes[n] = notes[n];
+  }
+}
 
 // Play in triplets, but only on first and last
-const unsigned char bass_drum_rhythm_4_4_jazz_notes[] = {
-  0x70, 0x00, 0x60, 0x00, 0x00, 0x00, 0x70, 0x00, 0x60, 0x00, 0x00, 0x00
-};
-Rhythm bass_drum_rhythm_4_4_jazz = {
-  "one 'let", 4, 4, 12, bass_drum_rhythm_4_4_jazz_notes, 12
-};
+void bass_drum_rhythm_4_4_jazz(Rhythm* r) {
+  const unsigned char notes[] = {
+    0x70, 0x00, 0x60, 0x00, 0x00, 0x00, 0x70, 0x00, 0x60, 0x00, 0x00, 0x00
+  };
+  strcpy(r->name, "one 'let");
+  r->numerator = 4;
+  r->denominator = 4;
+  r->subdivision = 12;
+  r->note_count = 12;
+  for (int n=0;n < r->note_count;n++) {
+    r->notes[n] = notes[n];
+  }
+}
 // 3/4
-const unsigned char bass_drum_rhythm_3_4_notes[] = {
-  0x75, 0x60, 0x60
-};
-Rhythm bass_drum_rhythm_3_4 = {
-  "3/4 1-3", 3, 4, 4, bass_drum_rhythm_3_4_notes, 3
-};
+void bass_drum_rhythm_3_4(Rhythm* r) {
+  const unsigned char notes[] = {
+    0x75, 0x60, 0x60
+  };
+  strcpy(r->name, "3/4 1-3");
+  r->numerator = 3;
+  r->denominator = 4;
+  r->subdivision = 4;
+  r->note_count = 3;
+  for (int n=0;n < r->note_count;n++) {
+    r->notes[n] = notes[n];
+  }
+}
 
 // Standard rhythms
-Rhythm bass_standard_rhythms_arr[] = {
+r_func bass_standard_rhythms_arr[] = {
   bass_drum_rhythm_4_4,
   bass_drum_rhythm_offbeat,
   bass_drum_rhythm_beat,
@@ -178,7 +244,7 @@ RhythmCollection bass_standard_rhythms = {
 };
 
 // Rock rhythms
-Rhythm bass_rock_rhythms_arr[] = {
+r_func bass_rock_rhythms_arr[] = {
   bass_drum_rhythm_4_4,
   bass_drum_rhythm_offbeat,
   bass_drum_rhythm_beat,
@@ -189,7 +255,7 @@ RhythmCollection bass_rock_rhythms = {
 };
 
 // Blues rhythms
-Rhythm bass_blues_rhythms_arr[] = {
+r_func bass_blues_rhythms_arr[] = {
   bass_drum_rhythm_4_4,
   bass_drum_rhythm_offbeat,
   bass_drum_rhythm_beat
@@ -199,7 +265,7 @@ RhythmCollection bass_blues_rhythms = {
 };
 
 // Jazz rhythms
-Rhythm bass_jazz_rhythms_arr[] = {
+r_func bass_jazz_rhythms_arr[] = {
   bass_drum_rhythm_4_4_jazz,
   bass_drum_rhythm_4_4,
   bass_drum_rhythm_offbeat,
@@ -210,7 +276,7 @@ RhythmCollection bass_jazz_rhythms = {
 };
 
 // Waltz rhythms
-Rhythm bass_waltz_rhythms_arr[] = {
+r_func bass_waltz_rhythms_arr[] = {
   bass_drum_rhythm_3_4
 };
 RhythmCollection bass_waltz_rhythms = {
@@ -228,31 +294,31 @@ RhythmCollection bass_rhythms[] = {
 /* bass drum breaks */
 
 // Standard breaks
-Rhythm bass_standard_breaks_arr[] = {bass_drum_rhythm_4_4};
+r_func bass_standard_breaks_arr[] = {bass_drum_rhythm_4_4};
 RhythmCollection bass_standard_breaks = {
   bass_standard_breaks_arr, 1, 0
 };
 
 // Rock breaks
-Rhythm bass_rock_breaks_arr[] = {bass_drum_rhythm_4_4};
+r_func bass_rock_breaks_arr[] = {bass_drum_rhythm_4_4};
 RhythmCollection bass_rock_breaks = {
   bass_rock_breaks_arr, 1, 0
 };
 
 // Blues breaks
-Rhythm bass_blues_breaks_arr[] = {bass_drum_rhythm_4_4};
+r_func bass_blues_breaks_arr[] = {bass_drum_rhythm_4_4};
 RhythmCollection bass_blues_breaks = {
   bass_blues_breaks_arr, 1, 0
 };
 
 // Jazz breaks
-Rhythm bass_jazz_breaks_arr[] = {bass_drum_rhythm_4_4};
+r_func bass_jazz_breaks_arr[] = {bass_drum_rhythm_4_4};
 RhythmCollection bass_jazz_breaks = {
   bass_jazz_breaks_arr, 1, 0
 };
 
 // Waltz breaks
-Rhythm bass_waltz_breaks_arr[] = {bass_drum_rhythm_3_4};
+r_func bass_waltz_breaks_arr[] = {bass_drum_rhythm_3_4};
 RhythmCollection bass_waltz_breaks = {
   bass_waltz_breaks_arr, 1, 0
 };
@@ -265,38 +331,80 @@ RhythmCollection bass_breaks[] = {
   bass_waltz_breaks
 };
 
+unsigned char bass_drum_cur_rhythm_notes[RHYTHM_MAX_NOTES] = {0};
+Rhythm bass_drum_cur_rhythm = {
+  "", 4, 4, 1, bass_drum_cur_rhythm_notes, 0
+};
+unsigned char bass_drum_cur_break_notes[RHYTHM_MAX_NOTES] = {0};
+Rhythm bass_drum_cur_break = {
+  "", 4, 4, 1, bass_drum_cur_break_notes, 0
+};
 Instrument bass_drum = {
-  0, "Bass Drum", 36, A4, bass_rhythms, bass_breaks
+  0, "Bass Drum", 36, A4, bass_rhythms, bass_breaks,
+  bass_drum_cur_rhythm, bass_drum_cur_break
 };
 
 /* Snare drum */
 /* Snare drum rhythms */
-const unsigned char snare_drum_rhythm_4_4_offbeat_notes[] = {0, 0x40, 0, 0x40};
-Rhythm snare_drum_rhythm_4_4_offbeat = {
-  "Off Beat", 4, 4, 4, snare_drum_rhythm_4_4_offbeat_notes, 4
-};
+void snare_drum_rhythm_4_4_offbeat(Rhythm* r) {
+  const unsigned char notes[] = {
+    0, 0x40, 0, 0x40
+  };
+  strcpy(r->name, "Off Beat");
+  r->numerator = 4;
+  r->denominator = 4;
+  r->subdivision = 4;
+  r->note_count = 4;
+  for (int n=0;n < r->note_count;n++) {
+    r->notes[n] = notes[n];
+  }
+}
 
-Rhythm snare_drum_rhythm_4_4 = {
-  "1-4", 4, 4, 4, bass_drum_rhythm_4_4_notes, 4
-};
+void snare_drum_rhythm_4_4(Rhythm* r) {
+  const unsigned char notes[] = {
+    0x75, 0x60, 0x60, 0x60
+  };
+  strcpy(r->name, "1-4");
+  r->numerator = 4;
+  r->denominator = 4;
+  r->subdivision = 4;
+  r->note_count = 4;
+  for (int n=0;n < r->note_count;n++) {
+    r->notes[n] = notes[n];
+  }
+}
 
-const unsigned char snare_drum_rhythm_4_4_jazz_notes[] = {
-  0x00, 0x00, 0x00, 0x70, 0x00, 0x60, 0x00, 0x00, 0x00, 0x70, 0x00, 0x60
-};
-Rhythm snare_drum_rhythm_4_4_jazz = {
-  "2+4: 1+3", 4, 4, 12, snare_drum_rhythm_4_4_jazz_notes, 12
-};
+void snare_drum_rhythm_4_4_jazz(Rhythm* r) {
+  const unsigned char notes[] = {
+    0x00, 0x00, 0x00, 0x70, 0x00, 0x60, 0x00, 0x00, 0x00, 0x70, 0x00, 0x60
+  };
+  strcpy(r->name, "2+4: 1+3");
+  r->numerator = 4;
+  r->denominator = 4;
+  r->subdivision = 12;
+  r->note_count = 12;
+  for (int n=0;n < r->note_count;n++) {
+    r->notes[n] = notes[n];
+  }
+}
 
 // 3/4
-const unsigned char snare_drum_rhythm_3_4_waltz_offbeat_notes[] = {
-  0x00, 0x60, 0x60
-};
-Rhythm snare_drum_rhythm_3_4_waltz_offbeat = {
-  "3/4 2+3", 3, 4, 4, snare_drum_rhythm_3_4_waltz_offbeat_notes, 3
-};
+void snare_drum_rhythm_3_4_waltz_offbeat(Rhythm* r) {
+  const unsigned char notes[] = {
+    0x00, 0x60, 0x60
+  };
+  strcpy(r->name, "3/4 2+3");
+  r->numerator = 3;
+  r->denominator = 4;
+  r->subdivision = 4;
+  r->note_count = 3;
+  for (int n=0;n < r->note_count;n++) {
+    r->notes[n] = notes[n];
+  }
+}
 
 // Standard rhythms
-Rhythm snare_standard_rhythms_arr[] = {
+r_func snare_standard_rhythms_arr[] = {
   snare_drum_rhythm_4_4_offbeat,
   snare_drum_rhythm_4_4
 };
@@ -305,7 +413,7 @@ RhythmCollection snare_standard_rhythms = {
 };
 
 // Rock rhythms
-Rhythm snare_rock_rhythms_arr[] = {
+r_func snare_rock_rhythms_arr[] = {
   snare_drum_rhythm_4_4_offbeat,
   snare_drum_rhythm_4_4
 };
@@ -314,19 +422,19 @@ RhythmCollection snare_rock_rhythms = {
 };
 
 // Blues rhythms
-Rhythm snare_blues_rhythms_arr[] = {snare_drum_rhythm_4_4_offbeat};
+r_func snare_blues_rhythms_arr[] = {snare_drum_rhythm_4_4_offbeat};
 RhythmCollection snare_blues_rhythms = {
   snare_blues_rhythms_arr, 1, 0
 };
 
 // Jazz rhythms
-Rhythm snare_jazz_rhythms_arr[] = {snare_drum_rhythm_4_4_jazz};
+r_func snare_jazz_rhythms_arr[] = {snare_drum_rhythm_4_4_jazz};
 RhythmCollection snare_jazz_rhythms = {
   snare_jazz_rhythms_arr, 1, 0
 };
 
 // Waltz rhythms
-Rhythm snare_waltz_rhythms_arr[] = {
+r_func snare_waltz_rhythms_arr[] = {
   snare_drum_rhythm_3_4_waltz_offbeat,
   empty_rhythm
 };
@@ -344,30 +452,51 @@ RhythmCollection snare_rhythms[] = {
 
 /* Snare drum breaks */
 
-const unsigned char snare_drum_break_standard_notes[] = {
-  0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x65, 0x00
-};
-Rhythm snare_drum_break_standard = {
-  "1-7", 4, 4, 8, snare_drum_break_standard_notes, 8
-};
+void snare_drum_break_standard(Rhythm* r) {
+  const unsigned char notes[] = {
+    0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x65, 0x00
+  };
+  strcpy(r->name, "1-7");
+  r->numerator = 4;
+  r->denominator = 4;
+  r->subdivision = 8;
+  r->note_count = 8;
+  for (int n=0;n < r->note_count;n++) {
+    r->notes[n] = notes[n];
+  }
+}
 
-const unsigned char snare_drum_break_lets_notes[] = {
-  0x00, 0x00, 0x60, 0x00, 0x00, 0x60, 0x00, 0x00, 0x60, 0x00, 0x00, 0x60
-};
-Rhythm snare_drum_break_lets = {
-  "'let", 4, 4, 12, snare_drum_break_lets_notes, 12
-};
+void snare_drum_break_lets(Rhythm* r) {
+  const unsigned char notes[] = {
+    0x00, 0x00, 0x60, 0x00, 0x00, 0x60, 0x00, 0x00, 0x60, 0x00, 0x00, 0x60
+  };
+  strcpy(r->name, "'let");
+  r->numerator = 4;
+  r->denominator = 4;
+  r->subdivision = 12;
+  r->note_count = 12;
+  for (int n=0;n < r->note_count;n++) {
+    r->notes[n] = notes[n];
+  }
+}
 
 // 3/4
-const unsigned char snare_drum_break_3_4_notes[] = {
-  0x70, 0x00, 0x60, 0x60, 0x00, 0x60, 0x60, 0x00, 0x00
-};
-Rhythm snare_drum_break_3_4 = {
-  "one'let", 3, 4, 12, snare_drum_break_3_4_notes, 9
-};
+void snare_drum_break_3_4(Rhythm* r) {
+  const unsigned char notes[] = {
+    0x70, 0x00, 0x60, 0x60, 0x00, 0x60, 0x60, 0x00, 0x00
+  };
+  strcpy(r->name, "one'let");
+  r->numerator = 3;
+  r->denominator = 4;
+  r->subdivision = 12;
+  r->note_count = 9;
+  for (int n=0;n < r->note_count;n++) {
+    r->notes[n] = notes[n];
+  }
+}
 
 // Standard breaks
-Rhythm snare_standard_breaks_arr[] = {
+r_func snare_standard_breaks_arr[] = {
   snare_drum_break_standard,
   bass_drum_rhythm_4_4
 };
@@ -376,7 +505,7 @@ RhythmCollection snare_standard_breaks = {
 };
 
 // Rock breaks
-Rhythm snare_rock_breaks_arr[] = {
+r_func snare_rock_breaks_arr[] = {
   snare_drum_break_standard,
   bass_drum_rhythm_4_4
 };
@@ -385,7 +514,7 @@ RhythmCollection snare_rock_breaks = {
 };
 
 // Blues breaks
-Rhythm snare_blues_breaks_arr[] = {
+r_func snare_blues_breaks_arr[] = {
   empty_rhythm,
   snare_drum_break_lets,
   bass_drum_rhythm_4_4
@@ -395,7 +524,7 @@ RhythmCollection snare_blues_breaks = {
 };
 
 // Jazz breaks
-Rhythm snare_jazz_breaks_arr[] = {
+r_func snare_jazz_breaks_arr[] = {
   empty_rhythm,
   snare_drum_break_lets,
   bass_drum_rhythm_4_4
@@ -405,7 +534,7 @@ RhythmCollection snare_jazz_breaks = {
 };
 
 // Waltz breaks
-Rhythm snare_waltz_breaks_arr[] = {
+r_func snare_waltz_breaks_arr[] = {
   empty_rhythm,
   snare_drum_break_3_4,
 };
@@ -421,51 +550,106 @@ RhythmCollection snare_breaks[] = {
   snare_waltz_breaks
 };
 
-Instrument snare_drum = {1, "Snare Drum", 38, A1, snare_rhythms, snare_breaks};
+unsigned char snare_drum_cur_rhythm_notes[RHYTHM_MAX_NOTES] = {0};
+Rhythm snare_drum_cur_rhythm = {
+  "", 4, 4, 1, snare_drum_cur_rhythm_notes, 0
+};
+unsigned char snare_drum_cur_break_notes[RHYTHM_MAX_NOTES] = {0};
+Rhythm snare_drum_cur_break = {
+  "", 4, 4, 1, snare_drum_cur_break_notes, 0
+};
+Instrument snare_drum = {
+  1, "Snare Drum", 38, A1, snare_rhythms, snare_breaks,
+  snare_drum_cur_rhythm, snare_drum_cur_break
+};
 
 /* Hi-Hat */
 /* Hi-Hat rhythms */
-const unsigned char hi_hat_rhythm_4_4_eights_notes[] = {
-  0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48};
-Rhythm hi_hat_rhythm_4_4_eights = {
-  "1-8", 4, 4, 8, hi_hat_rhythm_4_4_eights_notes, 8
-};
-const unsigned char hi_hat_rhythm_4_4_triplets_notes[] = {
-  0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48
-};
-Rhythm hi_hat_rhythm_4_4_triplets = {
-  "1-12", 4, 4, 12, hi_hat_rhythm_4_4_triplets_notes, 12
-};
-const unsigned char hi_hat_rhythm_triplets_1_3_notes[] = {
-  0x48, 0x00, 0x40, 0x48, 0x00, 0x40, 0x48, 0x00, 0x40, 0x48, 0x00, 0x40
-};
-Rhythm hi_hat_rhythm_triplets_1_3 = {
-  "One 'let", 4, 4, 12, hi_hat_rhythm_triplets_1_3_notes, 12
-};
-const unsigned char hi_hat_rhythm_offbeat_notes[] = {
-  0x00, 0x48, 0x00, 0x48
-};
-Rhythm hi_hat_rhythm_4_4_offbeat = {
-  "Off Beat", 4, 4, 4, hi_hat_rhythm_offbeat_notes, 4
-};
+void hi_hat_rhythm_4_4_eights(Rhythm* r) {
+  const unsigned char notes[] = {
+    0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48
+  };
+  strcpy(r->name, "1-8");
+  r->numerator = 4;
+  r->denominator = 4;
+  r->subdivision = 8;
+  r->note_count = 8;
+  for (int n=0;n < r->note_count;n++) {
+    r->notes[n] = notes[n];
+  }
+}
+void hi_hat_rhythm_4_4_triplets(Rhythm* r) {
+  const unsigned char notes[] = {
+    0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48
+  };
+  strcpy(r->name, "1-12");
+  r->numerator = 4;
+  r->denominator = 4;
+  r->subdivision = 12;
+  r->note_count = 12;
+  for (int n=0;n < r->note_count;n++) {
+    r->notes[n] = notes[n];
+  }
+}
+
+void hi_hat_rhythm_triplets_1_3(Rhythm* r) {
+  const unsigned char notes[] = {
+    0x48, 0x00, 0x40, 0x48, 0x00, 0x40, 0x48, 0x00, 0x40, 0x48, 0x00, 0x40
+  };
+  strcpy(r->name, "One 'let");
+  r->numerator = 4;
+  r->denominator = 4;
+  r->subdivision = 12;
+  r->note_count = 12;
+  for (int n=0;n < r->note_count;n++) {
+    r->notes[n] = notes[n];
+  }
+}
+void hi_hat_rhythm_4_4_offbeat(Rhythm* r) {
+  const unsigned char notes[] = {
+    0x00, 0x48, 0x00, 0x48
+  };
+  strcpy(r->name, "Off Beat");
+  r->numerator = 4;
+  r->denominator = 4;
+  r->subdivision = 4;
+  r->note_count = 4;
+  for (int n=0;n < r->note_count;n++) {
+    r->notes[n] = notes[n];
+  }
+}
 
 // 3/4
-const unsigned char hi_hat_rhythm_3_4_waltz_notes[] = {
-  0x70, 0x00, 0x00, 0x70, 0x00, 0x60, 0x70, 0x00, 0x00
-};
-Rhythm hi_hat_rhythm_3_4_waltz = {
-  "3/4 1+2+23/3+3", 3, 4, 12, hi_hat_rhythm_3_4_waltz_notes, 9
-};
+void hi_hat_rhythm_3_4_waltz(Rhythm* r) {
+  const unsigned char notes[] = {
+    0x70, 0x00, 0x00, 0x70, 0x00, 0x60, 0x70, 0x00, 0x00
+  };
+  strcpy(r->name, "3/4 1+2+23/3+3");
+  r->numerator = 3;
+  r->denominator = 4;
+  r->subdivision = 12;
+  r->note_count = 9;
+  for (int n=0;n < r->note_count;n++) {
+    r->notes[n] = notes[n];
+  }
+}
 
-const unsigned char hi_hat_rhythm_3_4_triplets_notes[] = {
-  0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48
-};
-Rhythm hi_hat_rhythm_3_4_triplets = {
-  "1-9", 3, 4, 12, hi_hat_rhythm_3_4_triplets_notes, 9
-};
+void hi_hat_rhythm_3_4_triplets(Rhythm* r) {
+  const unsigned char notes[] = {
+    0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48, 0x48
+  };
+  strcpy(r->name, "1-9");
+  r->numerator = 3;
+  r->denominator = 4;
+  r->subdivision = 12;
+  r->note_count = 9;
+  for (int n=0;n < r->note_count;n++) {
+    r->notes[n] = notes[n];
+  }
+}
 
 // Standard rhythms
-Rhythm hi_hat_standard_rhythms_arr[] = {
+r_func hi_hat_standard_rhythms_arr[] = {
   hi_hat_rhythm_4_4_eights,
   hi_hat_rhythm_4_4_offbeat,
   empty_rhythm
@@ -475,7 +659,7 @@ RhythmCollection hi_hat_standard_rhythms = {
 };
 
 // Rock rhythms
-Rhythm hi_hat_rock_rhythms_arr[] = {
+r_func hi_hat_rock_rhythms_arr[] = {
   hi_hat_rhythm_4_4_eights,
   hi_hat_rhythm_4_4_offbeat,
   empty_rhythm
@@ -485,7 +669,7 @@ RhythmCollection hi_hat_rock_rhythms = {
 };
 
 // Blues rhythms
-Rhythm hi_hat_blues_rhythms_arr[] = {
+r_func hi_hat_blues_rhythms_arr[] = {
   empty_rhythm,
   hi_hat_rhythm_4_4_triplets,
   hi_hat_rhythm_triplets_1_3
@@ -495,7 +679,7 @@ RhythmCollection hi_hat_blues_rhythms = {
 };
 
 // Jazz rhythms
-Rhythm hi_hat_jazz_rhythms_arr[] = {
+r_func hi_hat_jazz_rhythms_arr[] = {
   empty_rhythm,
   hi_hat_rhythm_4_4_offbeat,
   hi_hat_rhythm_triplets_1_3,
@@ -506,7 +690,7 @@ RhythmCollection hi_hat_jazz_rhythms = {
 };
 
 // Waltz rhythms
-Rhythm hi_hat_waltz_rhythms_arr[] = {
+r_func hi_hat_waltz_rhythms_arr[] = {
   empty_rhythm,
   hi_hat_rhythm_3_4_waltz,
   hi_hat_rhythm_3_4_triplets
@@ -524,15 +708,22 @@ RhythmCollection hi_hat_rhythms[] = {
 };
 
 /* Hi-Hat breaks */
-const unsigned char hi_hat_break_standard_notes[] = {
-  0x60, 0x60, 0x60, 0x65
-};
-Rhythm hi_hat_break_standard = {
-  "1-4", 4, 4, 4, hi_hat_break_standard_notes, 4
-};
+void hi_hat_break_standard(Rhythm* r) {
+  const unsigned char notes[] = {
+    0x60, 0x60, 0x60, 0x65
+  };
+  strcpy(r->name, "1-4");
+  r->numerator = 4;
+  r->denominator = 4;
+  r->subdivision = 4;
+  r->note_count = 4;
+  for (int n=0;n < r->note_count;n++) {
+    r->notes[n] = notes[n];
+  }
+}
 
 // Standard breaks
-Rhythm hi_hat_standard_breaks_arr[] = {
+r_func hi_hat_standard_breaks_arr[] = {
   hi_hat_break_standard,
   hi_hat_rhythm_4_4_eights,
   empty_rhythm
@@ -542,7 +733,7 @@ RhythmCollection hi_hat_standard_breaks = {
 };
 
 // Rock breaks
-Rhythm hi_hat_rock_breaks_arr[] = {
+r_func hi_hat_rock_breaks_arr[] = {
   hi_hat_break_standard,
   hi_hat_rhythm_4_4_eights,
   empty_rhythm
@@ -552,7 +743,7 @@ RhythmCollection hi_hat_rock_breaks = {
 };
 
 // Blues breaks
-Rhythm hi_hat_blues_breaks_arr[] = {
+r_func hi_hat_blues_breaks_arr[] = {
   empty_rhythm,
   hi_hat_break_standard,
   hi_hat_rhythm_4_4_offbeat,
@@ -564,7 +755,7 @@ RhythmCollection hi_hat_blues_breaks = {
 };
 
 // Jazz breaks
-Rhythm hi_hat_jazz_breaks_arr[] = {
+r_func hi_hat_jazz_breaks_arr[] = {
   empty_rhythm,
   hi_hat_break_standard,
   hi_hat_rhythm_4_4_offbeat,
@@ -576,7 +767,7 @@ RhythmCollection hi_hat_jazz_breaks = {
 };
 
 // Waltz breaks
-Rhythm hi_hat_waltz_breaks_arr[] = {
+r_func hi_hat_waltz_breaks_arr[] = {
   empty_rhythm,
   hi_hat_rhythm_3_4_triplets
 };
@@ -592,7 +783,18 @@ RhythmCollection hi_hat_breaks[] = {
   hi_hat_waltz_breaks
 };
 
-Instrument hi_hat = {2, "Hi-Hat", 42, A2, hi_hat_rhythms, hi_hat_breaks};
+unsigned char hi_hat_cur_rhythm_notes[RHYTHM_MAX_NOTES] = {0};
+Rhythm hi_hat_cur_rhythm = {
+  "", 4, 4, 1, hi_hat_cur_rhythm_notes, 0
+};
+unsigned char hi_hat_cur_break_notes[RHYTHM_MAX_NOTES] = {0};
+Rhythm hi_hat_cur_break = {
+  "", 4, 4, 1, hi_hat_cur_break_notes, 0
+};
+Instrument hi_hat = {
+  2, "Hi-Hat", 42, A2, hi_hat_rhythms, hi_hat_breaks,
+  hi_hat_cur_rhythm, hi_hat_cur_break
+};
 
 /* Splash */
 /* Splash rhythms */
@@ -601,53 +803,74 @@ Instrument hi_hat = {2, "Hi-Hat", 42, A2, hi_hat_rhythms, hi_hat_breaks};
 RhythmCollection* splash_rhythms = empty_rhythms;
 
 /* Splash breaks */
-const unsigned char splash_break_eigth_notes[] = {
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x50
-};
-Rhythm splash_break_eigth = {
-  "8", 4, 4, 8, splash_break_eigth_notes, 8
-};
-const unsigned char splash_break_4_4_notes[] = {
-  0x00, 0x00, 0x00, 0x50
-};
-Rhythm splash_break_4_4 = {
-  "4", 4, 4, 4, splash_break_4_4_notes, 4
-};
+void splash_break_eigth(Rhythm* r) {
+  const unsigned char notes[] = {
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x50
+  };
+  strcpy(r->name, "8");
+  r->numerator = 4;
+  r->denominator = 4;
+  r->subdivision = 8;
+  r->note_count = 8;
+  for (int n=0;n < r->note_count;n++) {
+    r->notes[n] = notes[n];
+  }
+}
+void splash_break_4_4(Rhythm* r) {
+  const unsigned char notes[] = {
+    0x00, 0x00, 0x00, 0x50
+  };
+  strcpy(r->name, "4");
+  r->numerator = 4;
+  r->denominator = 4;
+  r->subdivision = 4;
+  r->note_count = 4;
+  for (int n=0;n < r->note_count;n++) {
+    r->notes[n] = notes[n];
+  }
+}
 
 // 3/4
-const unsigned char splash_break_3_4_notes[] = {
-  0x00, 0x00, 0x50
-};
-Rhythm splash_break_3_4 = {
-  "4", 3, 4, 4, splash_break_3_4_notes, 3
-};
+void splash_break_3_4(Rhythm* r) {
+  const unsigned char notes[] = {
+    0x00, 0x00, 0x50
+  };
+  strcpy(r->name, "4");
+  r->numerator = 3;
+  r->denominator = 4;
+  r->subdivision = 4;
+  r->note_count = 3;
+  for (int n=0;n < r->note_count;n++) {
+    r->notes[n] = notes[n];
+  }
+}
 
 // Standard breaks
-Rhythm splash_standard_breaks_arr[] = {splash_break_eigth};
+r_func splash_standard_breaks_arr[] = {splash_break_eigth};
 RhythmCollection splash_standard_breaks = {
   splash_standard_breaks_arr, 1, 0
 };
 
 // Rock breaks
-Rhythm splash_rock_breaks_arr[] = {splash_break_4_4};
+r_func splash_rock_breaks_arr[] = {splash_break_4_4};
 RhythmCollection splash_rock_breaks = {
   splash_rock_breaks_arr, 1, 0
 };
 
 // Blues breaks
-Rhythm splash_blues_breaks_arr[] = {splash_break_4_4};
+r_func splash_blues_breaks_arr[] = {splash_break_4_4};
 RhythmCollection splash_blues_breaks = {
   splash_blues_breaks_arr, 1, 0
 };
 
 // Jazz breaks
-Rhythm splash_jazz_breaks_arr[] = {splash_break_4_4};
+r_func splash_jazz_breaks_arr[] = {splash_break_4_4};
 RhythmCollection splash_jazz_breaks = {
   splash_jazz_breaks_arr, 1, 0
 };
 
 // Waltz breaks
-Rhythm splash_waltz_breaks_arr[] = {splash_break_3_4};
+r_func splash_waltz_breaks_arr[] = {splash_break_3_4};
 RhythmCollection splash_waltz_breaks = {
   splash_waltz_breaks_arr, 1, 0
 };
@@ -660,7 +883,18 @@ RhythmCollection splash_breaks[] = {
   splash_waltz_breaks
 };
 
-Instrument splash = {3, "Splash", 49, A2, splash_rhythms, splash_breaks};
+unsigned char splash_cur_rhythm_notes[RHYTHM_MAX_NOTES] = {0};
+Rhythm splash_cur_rhythm = {
+  "", 4, 4, 1, splash_cur_rhythm_notes, 0
+};
+unsigned char splash_cur_break_notes[RHYTHM_MAX_NOTES] = {0};
+Rhythm splash_cur_break = {
+  "", 4, 4, 1, splash_cur_break_notes, 0
+};
+Instrument splash = {
+  3, "Splash", 49, A2, splash_rhythms, splash_breaks,
+  splash_cur_rhythm, splash_cur_break
+};
 
 
 /* Ride */
@@ -668,7 +902,7 @@ Instrument splash = {3, "Splash", 49, A2, splash_rhythms, splash_breaks};
 // take the ones of hi-hat
 
 // Standard rhythms
-Rhythm ride_standard_rhythms_arr[] = {
+r_func ride_standard_rhythms_arr[] = {
   empty_rhythm,
   hi_hat_rhythm_4_4_eights,
   hi_hat_rhythm_4_4_offbeat
@@ -678,7 +912,7 @@ RhythmCollection ride_standard_rhythms = {
 };
 
 // Rock rhythms
-Rhythm ride_rock_rhythms_arr[] = {
+r_func ride_rock_rhythms_arr[] = {
   empty_rhythm,
   hi_hat_rhythm_4_4_eights,
   hi_hat_rhythm_4_4_offbeat
@@ -688,7 +922,7 @@ RhythmCollection ride_rock_rhythms = {
 };
 
 // Blues rhythms
-Rhythm ride_blues_rhythms_arr[] = {
+r_func ride_blues_rhythms_arr[] = {
   hi_hat_rhythm_4_4_triplets,
   hi_hat_rhythm_triplets_1_3,
   empty_rhythm
@@ -698,7 +932,7 @@ RhythmCollection ride_blues_rhythms = {
 };
 
 // Jazz rhythms
-Rhythm ride_jazz_rhythms_arr[] = {
+r_func ride_jazz_rhythms_arr[] = {
   hi_hat_rhythm_4_4_offbeat,
   hi_hat_rhythm_triplets_1_3,
   hi_hat_rhythm_4_4_triplets,
@@ -709,7 +943,7 @@ RhythmCollection ride_jazz_rhythms = {
 };
 
 // Waltz rhythms
-Rhythm ride_waltz_rhythms_arr[] = {
+r_func ride_waltz_rhythms_arr[] = {
   hi_hat_rhythm_3_4_waltz,
   hi_hat_rhythm_3_4_triplets,
   empty_rhythm
@@ -727,10 +961,10 @@ RhythmCollection ride_rhythms[] = {
 };
 
 /* Ride breaks */
-Rhythm ride_break_standard = hi_hat_break_standard;
+r_func ride_break_standard = hi_hat_break_standard;
 
 // Standard breaks
-Rhythm ride_standard_breaks_arr[] = {
+r_func ride_standard_breaks_arr[] = {
   empty_rhythm,
   ride_break_standard,
   hi_hat_rhythm_4_4_eights
@@ -740,7 +974,7 @@ RhythmCollection ride_standard_breaks = {
 };
 
 // Rock breaks
-Rhythm ride_rock_breaks_arr[] = {
+r_func ride_rock_breaks_arr[] = {
   empty_rhythm,
   ride_break_standard,
   hi_hat_rhythm_4_4_eights
@@ -750,7 +984,7 @@ RhythmCollection ride_rock_breaks = {
 };
 
 // Blues breaks
-Rhythm ride_blues_breaks_arr[] = {
+r_func ride_blues_breaks_arr[] = {
   empty_rhythm,
   ride_break_standard,
   hi_hat_rhythm_4_4_offbeat,
@@ -762,7 +996,7 @@ RhythmCollection ride_blues_breaks = {
 };
 
 // Jazz breaks
-Rhythm ride_jazz_breaks_arr[] = {
+r_func ride_jazz_breaks_arr[] = {
   empty_rhythm,
   ride_break_standard,
   hi_hat_rhythm_4_4_offbeat,
@@ -774,7 +1008,7 @@ RhythmCollection ride_jazz_breaks = {
 };
 
 // Waltz breaks
-Rhythm ride_waltz_breaks_arr[] = {
+r_func ride_waltz_breaks_arr[] = {
   empty_rhythm,
   hi_hat_rhythm_3_4_triplets
 };
@@ -790,7 +1024,18 @@ RhythmCollection ride_breaks[] = {
   ride_waltz_breaks
 };
 
-Instrument ride = {4, "Ride", 51, A2, ride_rhythms, ride_breaks};
+unsigned char ride_cur_rhythm_notes[RHYTHM_MAX_NOTES] = {0};
+Rhythm ride_cur_rhythm = {
+  "", 4, 4, 1, ride_cur_rhythm_notes, 0
+};
+unsigned char ride_cur_break_notes[RHYTHM_MAX_NOTES] = {0};
+Rhythm ride_cur_break = {
+  "", 4, 4, 1, ride_cur_break_notes, 0
+};
+Instrument ride = {
+  4, "Ride", 51, A2, ride_rhythms, ride_breaks,
+  ride_cur_rhythm, ride_cur_break
+};
 
 
 /* Instrument list */

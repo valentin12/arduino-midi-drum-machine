@@ -122,6 +122,12 @@ const int instruments_pos = 256;
 // last status byte to implement MIDI running status
 unsigned char last_status_byte = 0;
 
+// Used to access data from a r_func only needed one time
+unsigned char tmp_rhythm_notes[RHYTHM_MAX_NOTES] = {0};
+Rhythm tmp_rhythm = {
+  "", 4, 4, 1, tmp_rhythm_notes, 0
+};
+
 // SCREENS
 class MainView: public View {
   void updateDisplay() {
@@ -182,8 +188,8 @@ class SetRhythmView: public View {
     lcd.setCursor(0, 1);
     lcd.print(instrs[cur_instr].rhythms[mode].cur_rhythm + 1);
     lcd.print(": ");
-    lcd.print(instrs[cur_instr].rhythms[mode].rhythms[
-      instrs[cur_instr].rhythms[mode].cur_rhythm].name);
+    // get current rhythm data from r_func
+    lcd.print(instrs[cur_instr].cur_rhythm.name);
 
     if (edit) {
       // Edit mode
@@ -205,6 +211,8 @@ class SetRhythmView: public View {
       else {
         instrs[cur_instr].rhythms[mode].cur_rhythm = 0;
       }
+      instrs[cur_instr].rhythms[mode].rhythms[
+        instrs[cur_instr].rhythms[mode].cur_rhythm](&instrs[cur_instr].cur_rhythm);
       saveInstrument(instrs[cur_instr]);
     }
     else {
@@ -230,6 +238,8 @@ class SetRhythmView: public View {
         instrs[cur_instr].rhythms[mode].cur_rhythm =
           instrs[cur_instr].rhythms[mode].rhythm_count - 1;
       }
+      instrs[cur_instr].rhythms[mode].rhythms[
+        instrs[cur_instr].rhythms[mode].cur_rhythm](&instrs[cur_instr].cur_rhythm);
       saveInstrument(instrs[cur_instr]);
     }
     else {
@@ -272,8 +282,7 @@ class SetBreakView: public View {
     lcd.setCursor(0, 1);
     lcd.print(instrs[cur_instr].breaks[mode].cur_rhythm + 1);
     lcd.print(": ");
-    lcd.print(instrs[cur_instr].breaks[mode].rhythms[
-      instrs[cur_instr].breaks[mode].cur_rhythm].name);
+    lcd.print(instrs[cur_instr].cur_break.name);
 
     if (edit) {
       // Edit mode
@@ -295,6 +304,8 @@ class SetBreakView: public View {
       else {
         instrs[cur_instr].breaks[mode].cur_rhythm = 0;
       }
+      instrs[cur_instr].breaks[mode].rhythms[
+        instrs[cur_instr].breaks[mode].cur_rhythm](&instrs[cur_instr].cur_break);
       saveInstrument(instrs[cur_instr]);
     }
     else {
@@ -320,6 +331,8 @@ class SetBreakView: public View {
         instrs[cur_instr].breaks[mode].cur_rhythm =
           instrs[cur_instr].breaks[mode].rhythm_count - 1;
       }
+      instrs[cur_instr].breaks[mode].rhythms[
+        instrs[cur_instr].breaks[mode].cur_rhythm](&instrs[cur_instr].cur_break);
       saveInstrument(instrs[cur_instr]);
     }
     else {
@@ -427,8 +440,6 @@ void computeStep(int step) {
   }
   for (int i=0;i<instrument_count;i++) {
     Instrument instr = instrs[i];
-    RhythmCollection rhythms = instr.rhythms[mode];
-    RhythmCollection breaks = instr.breaks[mode];
     for (int l=0;l<2;l++) {
       Rhythm r;
       if (l==0) {
@@ -436,12 +447,12 @@ void computeStep(int step) {
           continue;
         }
         else {
-          r = rhythms.rhythms[rhythms.cur_rhythm];
+          r = instr.cur_rhythm;
         }
       }
       else {
         if (is_break) {
-          r = breaks.rhythms[breaks.cur_rhythm];
+          r = instr.cur_break;
         }
         else {
           continue;
@@ -576,6 +587,15 @@ boolean isLocalStep(int global_step, int r_subdiv) {
          && global_step % (subdivision / (r_subdiv / denominator)) == 0;
 }
 
+void updateRhythms() {
+  for (int i=0;i<instrument_count;i++) {
+    instrs[i].rhythms[mode].rhythms[
+      instrs[i].rhythms[mode].cur_rhythm](&instrs[i].cur_rhythm);
+    instrs[i].breaks[mode].rhythms[
+      instrs[i].breaks[mode].cur_rhythm](&instrs[i].cur_break);
+  }
+}
+
 /* Getter and setter (for EEPROM) */
 int getMode() {
   int mode_eeprom = EEPROM.read(mode_pos);
@@ -597,6 +617,7 @@ void setMode(int new_mode) {
   if (mode != new_mode) {
     mode = new_mode;
     EEPROM_update(mode_pos, mode);
+    updateRhythms();
   }
 }
 
@@ -630,6 +651,8 @@ void restoreInstrument(Instrument* instr) {
       EEPROM_update(cur_pos + i, 0);
     }
   }
+  instr->rhythms[mode].rhythms[
+    instr->rhythms[mode].cur_rhythm](&instr->cur_rhythm);
   cur_pos += MAX_MODES;
   for (int i=0;i<mode_count;i++) {
     instr->breaks[i].cur_rhythm = EEPROM.read(cur_pos + i);
@@ -638,6 +661,8 @@ void restoreInstrument(Instrument* instr) {
       EEPROM_update(cur_pos + i, 0);
     }
   }
+  instr->breaks[mode].rhythms[
+    instr->breaks[mode].cur_rhythm](&instr->cur_break);
   cur_pos += MAX_MODES;
 }
 
