@@ -885,11 +885,11 @@ RhythmCollection splash_breaks[] = {
 
 unsigned char splash_cur_rhythm_notes[RHYTHM_MAX_NOTES] = {0};
 Rhythm splash_cur_rhythm = {
-  "", 4, 4, 1, splash_cur_rhythm_notes, 0
+  "", 4, 4, 1, splash_cur_rhythm_notes, 1
 };
 unsigned char splash_cur_break_notes[RHYTHM_MAX_NOTES] = {0};
 Rhythm splash_cur_break = {
-  "", 4, 4, 1, splash_cur_break_notes, 0
+  "", 4, 4, 1, splash_cur_break_notes, 1
 };
 Instrument splash = {
   3, "Splash", 49, A2, splash_rhythms, splash_breaks,

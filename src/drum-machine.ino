@@ -458,7 +458,7 @@ void computeStep(int step) {
           continue;
         }
       }
-      if (!isLocalStep(step, r.subdivision))
+      if (!isLocalStep(step, r.subdivision) || r.note_count == 0)
         continue;
       int local_step = getLocalStep(step, r.subdivision, r.note_count);
       if (r.notes[local_step] > 0) {
@@ -683,7 +683,7 @@ void setup() {
   lcd.print("Setup");
   // Setup Serial (TX0 and USB) with the baudrate 115200 to be able to use
   // an Serial to MIDI converter on a PC
-  Serial.begin(9600);
+  Serial.begin(115200);
   while(!Serial) ;
   // Setup Serial1 with the standard MIDI baud rate of 31250
   // to get MIDI on TX1 (pin 18)
